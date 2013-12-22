@@ -1,0 +1,8 @@
+/Dependancies/*
+/Runtime/*
+*.sdf
+*.opensdf
+obj
+bin
+Debug
+Release
