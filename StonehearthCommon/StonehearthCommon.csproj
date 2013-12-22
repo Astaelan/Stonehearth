@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{48B708BC-AF3D-4579-A0DB-34796D3B778F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>StonehearthCommon</RootNamespace>
+    <AssemblyName>StonehearthCommon</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dependancies\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dependancies\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.ProtocolBuffers, Version=2.4.1.473, Culture=neutral, PublicKeyToken=17b3b1f090c3ea48, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dependancies\Google.ProtocolBuffers.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.ProtocolBuffersLite, Version=2.4.1.473, Culture=neutral, PublicKeyToken=17b3b1f090c3ea48, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dependancies\Google.ProtocolBuffersLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ByteArraySegment.cs" />
+    <Compile Include="Client.cs" />
+    <Compile Include="DumpFrames\GameStartedFrame.cs" />
+    <Compile Include="DumpFrames\GameFinishedFrame.cs" />
+    <Compile Include="DumpFrames\StartScenarioAIFrame.cs" />
+    <Compile Include="DumpFrames\StartScenarioFrame.cs" />
+    <Compile Include="DumpFrames\UnrankedMatchFrame.cs" />
+    <Compile Include="DumpFrames\RankedMatchFrame.cs" />
+    <Compile Include="DumpFrames\DraftQueueFrame.cs" />
+    <Compile Include="DumpFrames\SetRichPresenceFrame.cs" />
+    <Compile Include="DumpFrames\SetPresenceStringFrame.cs" />
+    <Compile Include="DumpFrames\SetPresenceIntFrame.cs" />
+    <Compile Include="DumpFrames\SetPresenceBoolFrame.cs" />
+    <Compile Include="DumpFrames\SetPresenceBlobFrame.cs" />
+    <Compile Include="DumpFrames\ClearPresenceFrame.cs" />
+    <Compile Include="DumpFrames\GetPresenceFrame.cs" />
+    <Compile Include="DumpFrames\SetPartyDeckFrame.cs" />
+    <Compile Include="DumpFrames\RescindPartyInviteFrame.cs" />
+    <Compile Include="DumpFrames\SendPartyInviteFrame.cs" />
+    <Compile Include="DumpFrames\DeclinePartyInviteFrame.cs" />
+    <Compile Include="DumpFrames\AcceptPartyInviteFrame.cs" />
+    <Compile Include="DumpFrames\CancelChallengeFrame.cs" />
+    <Compile Include="DumpFrames\ApplicationWasUnpausedFrame.cs" />
+    <Compile Include="DumpFrames\ApplicationWasPausedFrame.cs" />
+    <Compile Include="DumpFrames\ClearPartyUpdatesFrame.cs" />
+    <Compile Include="DumpFrames\ClearChallengesFrame.cs" />
+    <Compile Include="DumpFrames\ClearWhispersFrame.cs" />
+    <Compile Include="DumpFrames\FilterProfanityFrame.cs" />
+    <Compile Include="DumpFrames\GetChallengesFrame.cs" />
+    <Compile Include="DumpFrames\GetPartyUpdatesInfoFrame.cs" />
+    <Compile Include="DumpFrames\GetPartyUpdatesFrame.cs" />
+    <Compile Include="DumpFrames\GetWhispersFrame.cs" />
+    <Compile Include="DumpFrames\GetWhisperInfoFrame.cs" />
+    <Compile Include="DumpFrames\RemoveFriendFrame.cs" />
+    <Compile Include="DumpFrames\ManageFriendInviteFrame.cs" />
+    <Compile Include="DumpFrames\AnswerChallengeFrame.cs" />
+    <Compile Include="DumpFrames\SendWhisperFrame.cs" />
+    <Compile Include="DumpFrames\SendFriendInviteFrame.cs" />
+    <Compile Include="DumpFrames\CheckWebAuthFrame.cs" />
+    <Compile Include="DumpFrames\ClearFriendsUpdatesFrame.cs" />
+    <Compile Include="DumpFrames\ClearErrorsFrame.cs" />
+    <Compile Include="DumpFrames\DumpFrameExternals.cs" />
+    <Compile Include="DumpFrames\ClearBnetEventsFrame.cs" />
+    <Compile Include="DumpFrames\GetFriendsUpdatesFrame.cs" />
+    <Compile Include="DumpFrames\GetErrorsFrame.cs" />
+    <Compile Include="DumpFrames\GetBnetEventsFrame.cs" />
+    <Compile Include="DumpFrames\GetQueueEventFrame.cs" />
+    <Compile Include="DumpFrames\GetFriendsInfoFrame.cs" />
+    <Compile Include="DumpFrames\GetQueueInfoFrame.cs" />
+    <Compile Include="DumpFrames\NextUtilPacketFrame.cs" />
+    <Compile Include="DumpFrames\SendUtilPacketFrame.cs" />
+    <Compile Include="DumpFrames\GetPlayRestrictionsFrame.cs" />
+    <Compile Include="DumpFrames\GetCurrentRegionFrame.cs" />
+    <Compile Include="DumpFrames\GetAccountRegionFrame.cs" />
+    <Compile Include="DumpFrames\GetMyGameAccountIdFrame.cs" />
+    <Compile Include="DumpFrames\GetBattleNetStatusFrame.cs" />
+    <Compile Include="DumpFrames\GetShutdownMinutesFrame.cs" />
+    <Compile Include="DumpFrames\GetAccountCountryFrame.cs" />
+    <Compile Include="DumpFrames\ProvideWebAuthTokenFrame.cs" />
+    <Compile Include="DumpFrames\QueryAuroraFrame.cs" />
+    <Compile Include="DumpFrames\CloseAuroraFrame.cs" />
+    <Compile Include="DumpFrames\RequestCloseAuroraFrame.cs" />
+    <Compile Include="DumpFrames\AppQuitFrame.cs" />
+    <Compile Include="DumpFrames\GetStoredBNetIPAddressFrame.cs" />
+    <Compile Include="DumpFrames\GetLaunchOptionFrame.cs" />
+    <Compile Include="DumpFrames\IsInitializedFrame.cs" />
+    <Compile Include="DumpFrames\InitFrame.cs" />
+    <Compile Include="DumpFrameType.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="GameClientProtocolState.cs" />
+    <Compile Include="IndentedStreamWriter.cs" />
+    <Compile Include="InternalPacketID.cs" />
+    <Compile Include="LobbyClientProtocolState.cs" />
+    <Compile Include="PasswordHasher.cs" />
+    <Compile Include="ProtocolVersion.cs" />
+    <Compile Include="LockFreeQueue.cs" />
+    <Compile Include="LogManager.cs" />
+    <Compile Include="Packet.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflector.cs" />
+    <Compile Include="Win32API.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
