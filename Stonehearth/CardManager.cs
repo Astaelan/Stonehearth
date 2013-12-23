@@ -138,26 +138,26 @@ namespace Stonehearth
                 AllCardAssetsByCardID.Add(cardAsset.CardID, cardAsset);
                 AllCardAssetsByAssetID.Add(cardAsset.AssetID, cardAsset);
                 if (cardAsset.CardSet == TAG_CARD_SET.CORE && cardAsset.CardType == TAG_CARDTYPE.HERO)
-                    CoreHeroCardAssetsByClassID.Add(cardAsset.Class, cardAsset);
+                    CoreHeroCardAssetsByClassID.Add(cardAsset.Class.GetValueOrDefault(), cardAsset);
                 if (cardAsset.CardSet == TAG_CARD_SET.CORE && cardAsset.CardType == TAG_CARDTYPE.HERO_POWER)
-                    CoreHeroPowerCardAssetsByClassID.Add(cardAsset.Class, cardAsset);
+                    CoreHeroPowerCardAssetsByClassID.Add(cardAsset.Class.GetValueOrDefault(), cardAsset);
                 if (cardAsset.CardSet == TAG_CARD_SET.CORE && cardAsset.Rarity == TAG_RARITY.FREE)
                 {
                     List<CardAsset> coreFreeCardAssets = null;
-                    if (!CoreFreeCardAssetsByClassID.TryGetValue(cardAsset.Class, out coreFreeCardAssets))
+                    if (!CoreFreeCardAssetsByClassID.TryGetValue(cardAsset.Class.GetValueOrDefault(), out coreFreeCardAssets))
                     {
                         coreFreeCardAssets = new List<CardAsset>();
-                        CoreFreeCardAssetsByClassID.Add(cardAsset.Class, coreFreeCardAssets);
+                        CoreFreeCardAssetsByClassID.Add(cardAsset.Class.GetValueOrDefault(), coreFreeCardAssets);
                     }
                     if (!cardAsset.CardID.StartsWith("GAME_")) coreFreeCardAssets.Add(cardAsset);
                 }
-                if (cardAsset.CardSet == TAG_CARD_SET.EXPERT1 && cardAsset.Collectible)
+                if (cardAsset.CardSet == TAG_CARD_SET.EXPERT1 && cardAsset.Collectible.GetValueOrDefault())
                 {
                     List<CardAsset> expertCollectibleCardAssets = null;
-                    if (!ExpertCollectibleCardAssetsByRarity.TryGetValue(cardAsset.Rarity, out expertCollectibleCardAssets))
+                    if (!ExpertCollectibleCardAssetsByRarity.TryGetValue(cardAsset.Rarity.GetValueOrDefault(), out expertCollectibleCardAssets))
                     {
                         expertCollectibleCardAssets = new List<CardAsset>();
-                        ExpertCollectibleCardAssetsByRarity.Add(cardAsset.Rarity, expertCollectibleCardAssets);
+                        ExpertCollectibleCardAssetsByRarity.Add(cardAsset.Rarity.GetValueOrDefault(), expertCollectibleCardAssets);
                     }
                     expertCollectibleCardAssets.Add(cardAsset);
                 }

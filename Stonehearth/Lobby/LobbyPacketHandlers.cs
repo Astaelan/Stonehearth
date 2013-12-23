@@ -196,8 +196,8 @@ namespace Stonehearth.Lobby
 
             // TODO: Temporary for now, until decks are in for AI's
             MatchPlayer matchPlayer2 = match.CreatePlayer(true,
-                                                          matchPlayer1.HeroCard,
-                                                          matchPlayer1.HeroPowerCard,
+                                                          matchPlayer1.HeroCardAsset,
+                                                          matchPlayer1.HeroPowerCardAsset,
                                                           player1Cards);
 
             Packet packet = new Packet((int)InternalPacketID.StartScenario);

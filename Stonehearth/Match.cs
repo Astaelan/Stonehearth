@@ -22,7 +22,6 @@ namespace Stonehearth
         public List<MatchPlayer> Players = new List<MatchPlayer>();
 
         private int mLastEntityID = 0;
-        public List<MatchEntity> Entities = new List<MatchEntity>();
 
         public MatchEntity GameEntity = null;
         public int Turn = 1;
@@ -30,71 +29,94 @@ namespace Stonehearth
 
         public Match()
         {
-            GameEntity = CreateEntity();
+            GameEntity = new MatchEntity(this);
             GameEntity.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.PLAY);
             GameEntity.SetTag(GAME_TAG.CARDTYPE, (int)TAG_CARDTYPE.GAME);
             GameEntity.SetTag(GAME_TAG.STATE, (int)TAG_STATE.LOADING);
         }
 
-        public MatchEntity CreateEntity()
-        {
-            MatchEntity matchEntity = new MatchEntity(Interlocked.Increment(ref mLastEntityID));
-            Entities.Add(matchEntity);
-            return matchEntity;
-        }
+        public int GetNextEntityID() { return Interlocked.Increment(ref mLastEntityID); }
+
+        //public MatchEntity CreateEntity()
+        //{
+        //    MatchEntity matchEntity = new MatchEntity(this);
+        //    Entities.Add(matchEntity);
+        //    return matchEntity;
+        //}
 
         public MatchPlayer CreatePlayer(bool pAI, CardAsset pHeroCard, CardAsset pHeroPowerCard, List<CardAsset> pCards, long pClientID = 0, long pAccountID = 0)
         {
-            MatchPlayer matchPlayer = new MatchPlayer(pAI, Interlocked.Increment(ref mLastPlayerID), pHeroCard, pHeroPowerCard, pCards, pClientID, pAccountID);
+            MatchPlayer matchPlayer = new MatchPlayer(this, pAI, Interlocked.Increment(ref mLastPlayerID), pHeroCard, pHeroPowerCard, pCards, pClientID, pAccountID);
             Players.Add(matchPlayer);
 
-            matchPlayer.Entity = CreateEntity();
-            matchPlayer.HeroEntity = CreateEntity();
-            matchPlayer.HeroPowerEntity = CreateEntity();
+            //matchPlayer.HeroCard = new MatchCard(this, matchPlayer, pHeroCard);
+            //matchPlayer.HeroPowerCard = new MatchCard(this, matchPlayer, pHeroPowerCard);
 
-            matchPlayer.Entity.SetTag(GAME_TAG.HERO_ENTITY, matchPlayer.HeroEntity.ID);
-            matchPlayer.Entity.SetTag(GAME_TAG.MAXHANDSIZE, 10);
-            matchPlayer.Entity.SetTag(GAME_TAG.STARTHANDSIZE, 4);
-            matchPlayer.Entity.SetTag(GAME_TAG.PLAYER_ID, matchPlayer.PlayerID);
-            matchPlayer.Entity.SetTag(GAME_TAG.TEAM_ID, matchPlayer.PlayerID);
-            matchPlayer.Entity.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.PLAY);
-            matchPlayer.Entity.SetTag(GAME_TAG.CONTROLLER, matchPlayer.PlayerID);
-            matchPlayer.Entity.SetTag(GAME_TAG.MAXRESOURCES, 10);
-            matchPlayer.Entity.SetTag(GAME_TAG.CARDTYPE, (int)TAG_CARDTYPE.PLAYER);
+            //matchPlayer.SetTag(GAME_TAG.HERO_ENTITY, matchPlayer.HeroCard.EntityID);
+            //matchPlayer.HeroCard.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.PLAY);
+            //matchPlayer.HeroPowerCard.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.PLAY);
+            //matchPlayer.HeroPowerCard.SetTag(GAME_TAG.CREATOR, matchPlayer.HeroCard.EntityID);
 
-            matchPlayer.HeroEntity.Name = matchPlayer.HeroCard.CardID;
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.CARDTYPE, (int)TAG_CARDTYPE.HERO);
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.PLAY);
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.CONTROLLER, matchPlayer.PlayerID);
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.HEALTH, matchPlayer.HeroCard.Health);
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.CARD_SET, (int)matchPlayer.HeroCard.CardSet);
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.FACTION, (int)matchPlayer.HeroCard.Faction);
-            matchPlayer.HeroEntity.SetTag(GAME_TAG.RARITY, (int)matchPlayer.HeroCard.Rarity);
-
-            matchPlayer.HeroPowerEntity.Name = matchPlayer.HeroPowerCard.CardID;
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.CREATOR, matchPlayer.HeroEntity.ID);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.CARDTYPE, (int)TAG_CARDTYPE.HERO_POWER);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.PLAY);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.CONTROLLER, matchPlayer.PlayerID);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.COST, matchPlayer.HeroPowerCard.Cost);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.CARD_SET, (int)matchPlayer.HeroPowerCard.CardSet);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.FACTION, (int)matchPlayer.HeroPowerCard.Faction);
-            matchPlayer.HeroPowerEntity.SetTag(GAME_TAG.RARITY, (int)matchPlayer.HeroPowerCard.Rarity);
-
-            foreach (CardAsset cardAsset in matchPlayer.Cards)
-            {
-                MatchCard matchCard = new MatchCard(cardAsset);
-                matchPlayer.DeckCards.Add(matchCard);
-
-                matchCard.Entity = CreateEntity();
-
-                matchCard.Entity.SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.DECK);
-                matchCard.Entity.SetTag(GAME_TAG.CONTROLLER, matchPlayer.PlayerID);
-                matchCard.Entity.SetTag(GAME_TAG.ZONE_POSITION, 0);
-                matchCard.Entity.SetTag(GAME_TAG.CANT_PLAY, 0);
-            }
+            //foreach (CardAsset cardAsset in matchPlayer.Cards)
+            //{
+            //    MatchCard matchCard = new MatchCard(this, matchPlayer, cardAsset);
+            //    Entities.Add(matchCard);
+            //    matchPlayer.DeckCards.Add(matchCard);
+            //}
 
             return matchPlayer;
+        }
+
+        public void FlushPowerHistory(params MatchPlayer[] pExceptMatchPlayers)
+        {
+            Players.Except(pExceptMatchPlayers).ForEach(p => p.FlushPowerHistory());
+        }
+
+        public void SendPowerHistoryData(PowerHistoryData pPowerHistoryData, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            Players.Except(pExceptMatchPlayers).ForEach(p => p.SendPowerHistoryData(pPowerHistoryData));
+        }
+
+        public void SendPowerHistoryFullEntity(PowerHistoryEntity pPowerHistoryEntity, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetFullEntity(pPowerHistoryEntity).Build(), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryShowEntity(PowerHistoryEntity pPowerHistoryEntity, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetShowEntity(pPowerHistoryEntity).Build(), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryHideEntity(int pEntityID, TAG_ZONE pZone, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetHideEntity(PowerHistoryHide.CreateBuilder().SetEntity(pEntityID).SetZone((int)pZone)).Build(), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryTagChange(PowerHistoryTagChange pPowerHistoryTagChange, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetTagChange(pPowerHistoryTagChange).Build(), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryZoneChange(MatchEntity pMatchEntity, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryTagChange(pMatchEntity.GetTag(GAME_TAG.ZONE), pExceptMatchPlayers);
+            SendPowerHistoryTagChange(pMatchEntity.GetTag(GAME_TAG.ZONE_POSITION), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryZoneChange(MatchEntity pMatchEntity, TAG_ZONE pZone, int pZonePosition, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryTagChange(pMatchEntity.SetTag(GAME_TAG.ZONE, (int)pZone), pExceptMatchPlayers);
+            SendPowerHistoryTagChange(pMatchEntity.SetTag(GAME_TAG.ZONE_POSITION, pZonePosition), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryStart(PowerHistoryStart.Types.Type pType, int pIndex, int pSource, int pTarget, params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetPowerStart(PowerHistoryStart.CreateBuilder().SetType(pType).SetSource(pSource).SetTarget(pTarget).SetIndex(pIndex)).Build(), pExceptMatchPlayers);
+        }
+
+        public void SendPowerHistoryEnd(params MatchPlayer[] pExceptMatchPlayers)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetPowerEnd(PowerHistoryEnd.CreateBuilder()).Build(), pExceptMatchPlayers);
         }
 
         

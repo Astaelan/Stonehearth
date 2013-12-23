@@ -1,7 +1,8 @@
 /Dependancies/*
 /Runtime/*
-*.sdf
 *.opensdf
+*.sdf
+*.suo
 obj
 bin
 Debug

@@ -12,57 +12,57 @@ namespace Stonehearth
     {
         private static HashSet<string> sUnhandledTags = new HashSet<string>();
 
-        public string CardID = null;
-        public int AssetID = 0;
-        public string CardName = null;
-        public TAG_CARD_SET CardSet = TAG_CARD_SET.TEST_TEMPORARY;
-        public TAG_CARDTYPE CardType = TAG_CARDTYPE.INVALID;
-        public TAG_FACTION Faction = TAG_FACTION.NEUTRAL;
-        public TAG_RACE Race = TAG_RACE.INVALID;
-        public TAG_CLASS Class = TAG_CLASS.INVALID;
-        public TAG_RARITY Rarity = TAG_RARITY.COMMON;
-        public int Cost = 0;
-        public int Atk = 0;
-        public int Health = 0;
-        public int AttackVisualType = 0;
-        public string CardTextInHand = null;
-        public string CardTextInPlay = null;
-        public int DevState = 0;
-        public TAG_ENCHANTMENT_VISUAL EnchantmentBirthVisual = TAG_ENCHANTMENT_VISUAL.INVALID;
-        public TAG_ENCHANTMENT_VISUAL EnchantmentIdleVisual = TAG_ENCHANTMENT_VISUAL.INVALID;
-        public string FlavorText = null;
-        public string ArtistName = null;
-        public string TargetingArrowText = null;
-        public string HowToGetThisGoldCard = null;
-        public string HowToGetThisCard = null;
-        public int Recall = 0;
-        public int Durability = 0;
-        public bool TriggerVisual = false;
-        public bool Collectible = false;
-        public bool Elite = false;
-        public bool Deathrattle = false;
-        public bool Charge = false;
-        public bool DivineShield = false;
-        public bool Windfury = false;
-        public bool Taunt = false;
-        public bool Aura = false;
-        public bool Enrage = false;
-        public bool OneTurnEffect = false;
-        public bool Stealth = false;
-        public bool Battlecry = false;
-        public bool Secret = false;
-        public bool Morph = false;
-        public bool AffectedBySpellPower = false;
-        public bool Freeze = false;
-        public bool Spellpower = false;
-        public bool Combo = false;
-        public bool Silence = false;
-        public bool Summoned = false;
-        public bool ImmuneToSpellpower = false;
-        public bool AdjacentBuff = false;
-        public bool GrantCharge = false;
-        public bool Poisonous = false;
-        public bool HealTarget = false;
+        public string CardID;
+        public int AssetID;
+        public string CardName;
+        public TAG_CARD_SET CardSet;
+        public TAG_CARDTYPE CardType;
+        public TAG_FACTION? Faction;
+        public TAG_RACE? Race;
+        public TAG_CLASS? Class;
+        public TAG_RARITY? Rarity;
+        public int? Cost;
+        public int? Atk;
+        public int? Health;
+        public int? AttackVisualType;
+        public string CardTextInHand;
+        public string CardTextInPlay;
+        public int? DevState;
+        public TAG_ENCHANTMENT_VISUAL? EnchantmentBirthVisual;
+        public TAG_ENCHANTMENT_VISUAL? EnchantmentIdleVisual;
+        public string FlavorText;
+        public string ArtistName;
+        public string TargetingArrowText;
+        public string HowToGetThisGoldCard;
+        public string HowToGetThisCard;
+        public int? Recall;
+        public int? Durability;
+        public bool? TriggerVisual;
+        public bool? Collectible;
+        public bool? Elite;
+        public bool? Deathrattle;
+        public bool? Charge;
+        public bool? DivineShield;
+        public bool? Windfury;
+        public bool? Taunt;
+        public bool? Aura;
+        public bool? Enrage;
+        public bool? OneTurnEffect;
+        public bool? Stealth;
+        public bool? Battlecry;
+        public bool? Secret;
+        public bool? Morph;
+        public bool? AffectedBySpellPower;
+        public bool? Freeze;
+        public bool? Spellpower;
+        public bool? Combo;
+        public bool? Silence;
+        public bool? Summoned;
+        public bool? ImmuneToSpellpower;
+        public bool? AdjacentBuff;
+        public bool? GrantCharge;
+        public bool? Poisonous;
+        public bool? HealTarget;
 
         public bool AllowCrafting = false;
         public Dictionary<CardFlair.PremiumType, int> ArcaneDustBuyValues = new Dictionary<CardFlair.PremiumType, int>();
@@ -148,7 +148,7 @@ namespace Stonehearth
                 cardAsset.MasterPower = cardAsset.Powers.Find(p => p.Definition == masterPowerDefinition);
             }
 
-            if (cardAsset.CardSet == TAG_CARD_SET.EXPERT1 && cardAsset.Collectible)
+            if (cardAsset.CardSet == TAG_CARD_SET.EXPERT1 && cardAsset.Collectible.GetValueOrDefault())
             {
                 switch (cardAsset.Rarity)
                 {

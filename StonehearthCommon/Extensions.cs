@@ -9,10 +9,9 @@ namespace StonehearthCommon
 {
     public static class Extensions
     {
-        public static int ToUnixTimestamp(this DateTime pThis)
-        {
-            return (int)(pThis - new DateTime(1970, 1, 1)).TotalSeconds;
-        }
+        public static int ToUnixTimestamp(this DateTime pThis) { return (int)(pThis - new DateTime(1970, 1, 1)).TotalSeconds; }
+
+        public static void ForEach<T>(this IEnumerable<T> pThis, Action<T> pCallback) { foreach (T value in pThis) pCallback(value); }
 
         public static Date.Builder FromDateTime(this Date.Builder pThis, DateTime pValue)
         {
