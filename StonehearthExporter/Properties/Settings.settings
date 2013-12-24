@@ -1,0 +1,16 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="StonehearthExporter.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="Database" Type="(Connection string)" Scope="Application">
+      <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;SerializableConnectionString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;ConnectionString&gt;Data Source=localhost;Initial Catalog=Stonehearth;Persist Security Info=True;User ID=Stonehearth;Password=password;MultipleActiveResultSets=True;&lt;/ConnectionString&gt;
+&lt;/SerializableConnectionString&gt;</DesignTimeValue>
+      <Value Profile="(Default)">Data Source=localhost;Initial Catalog=Stonehearth;Persist Security Info=True;User ID=Stonehearth;Password=password;MultipleActiveResultSets=True;</Value>
+    </Setting>
+    <Setting Name="ExecutablePath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">G:\Games\Hearthstone\Hearthstone.exe</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

@@ -1,11 +1,10 @@
-﻿using Stonehearth.Properties;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 
-namespace Stonehearth
+namespace StonehearthCommon
 {
     public static class DB
     {
@@ -33,9 +32,9 @@ namespace Stonehearth
             public override string ToString() { return mQuery.ToString(); }
         }
 
-        public static SqlConnection Open()
+        public static SqlConnection Open(string pConnectionString)
         {
-            SqlConnection connection = new SqlConnection(Settings.Default.Database);
+            SqlConnection connection = new SqlConnection(pConnectionString);
             connection.Open();
             return connection;
         }

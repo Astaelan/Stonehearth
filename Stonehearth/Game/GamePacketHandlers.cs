@@ -99,13 +99,14 @@ namespace Stonehearth.Game
                         }
                     case BeginPlaying.Types.Mode.READY:
                         {
-                            match.FirstPlayer = match.Players[new Random().Next(0, match.Players.Count - 1)];
+                            //match.FirstPlayer = match.Players[new Random().Next(1, match.Players.Count) - 1];
+                            match.FirstPlayer = match.Players[0];
                             match.CurrentPlayer = match.FirstPlayer;
 
                             match.SendPowerHistoryTagChange(match.GameEntity.SetTag(GAME_TAG.STATE, (int)TAG_STATE.RUNNING));
                             match.Players.ForEach(p => match.SendPowerHistoryTagChange(p.SetTag(GAME_TAG.PLAYSTATE, (int)TAG_PLAYSTATE.PLAYING)));
                             
-                            match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, match.GameEntity.EntityID, 0);
+                            //match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, match.GameEntity.EntityID, 0);
                             match.SendPowerHistoryTagChange(match.CurrentPlayer.SetTag(GAME_TAG.CURRENT_PLAYER, 1));
                             match.SendPowerHistoryTagChange(match.CurrentPlayer.SetTag(GAME_TAG.FIRST_PLAYER, 1));
                             match.SendPowerHistoryTagChange(match.GameEntity.SetTag(GAME_TAG.TURN, match.Turn));
@@ -121,7 +122,7 @@ namespace Stonehearth.Game
                                 match.SendPowerHistoryTagChange(matchPlayer.SetTag(GAME_TAG.NUM_TURNS_LEFT, 1));
                                 if (matchPlayer == match.FirstPlayer) continue;
 
-                                MatchCard coinCard = new MatchCard(match, matchPlayer, CardManager.TheCoinCardAsset);
+                                MatchCard coinCard = new MatchCard(match, matchPlayer, CardManager.TheCoinCard);
                                 matchPlayer.HandCards.Add(coinCard);
 
                                 coinCard.SetZoneAndPositionTags(TAG_ZONE.HAND, matchPlayer.HandCards.Count);
@@ -130,15 +131,15 @@ namespace Stonehearth.Game
                                 matchPlayer.SendPowerHistoryFullEntity(coinCard.ToShownPowerHistoryEntity());
                                 match.SendPowerHistoryFullEntity(coinCard.ToHiddenPowerHistoryEntity(), matchPlayer);
                             }
-                            match.SendPowerHistoryTagChange(match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.BEGIN_MULLIGAN));
-                            match.SendPowerHistoryEnd();
+                            //match.SendPowerHistoryTagChange(match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.BEGIN_MULLIGAN));
+                            //match.SendPowerHistoryEnd();
 
                             match.SendPowerHistoryTagChange(match.GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.BEGIN_MULLIGAN));
 
-                            match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, match.GameEntity.EntityID, 0);
+                            //match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, match.GameEntity.EntityID, 0);
                             match.Players.ForEach(p => match.SendPowerHistoryTagChange(p.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.INPUT)));
                             match.SendPowerHistoryTagChange(match.GameEntity.SetTag(GAME_TAG.TURN_START, DateTime.UtcNow.ToUnixTimestamp()));
-                            match.SendPowerHistoryEnd();
+                            //match.SendPowerHistoryEnd();
 
                             foreach (MatchPlayer matchPlayer in match.Players)
                             {
@@ -146,13 +147,13 @@ namespace Stonehearth.Game
 
                                 match.SendPowerHistoryTagChange(matchPlayer.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.DEALING));
 
-                                match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, matchPlayer.EntityID, 0);
+                                //match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, matchPlayer.EntityID, 0);
                                 match.SendPowerHistoryTagChange(matchPlayer.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.WAITING));
-                                match.SendPowerHistoryEnd();
+                                //match.SendPowerHistoryEnd();
 
-                                match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, matchPlayer.EntityID, 0);
+                                //match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, matchPlayer.EntityID, 0);
                                 match.SendPowerHistoryTagChange(matchPlayer.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.DONE));
-                                match.SendPowerHistoryEnd();
+                                //match.SendPowerHistoryEnd();
                             }
 
                             match.FlushPowerHistory();
@@ -220,8 +221,8 @@ namespace Stonehearth.Game
 
             pClient.Match.SendPowerHistoryTagChange(pClient.MatchPlayer.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.DEALING));
 
-            pClient.Match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, pClient.MatchPlayer.EntityID, 0);
-            List<MatchCard> returnedCards = pClient.MatchPlayer.HandCards.Where(c => c.Card != CardManager.TheCoinCardAsset && !chooseEntities.EntitiesList.Contains(c.EntityID)).ToList();
+            //pClient.Match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, pClient.MatchPlayer.EntityID, 0);
+            List<MatchCard> returnedCards = pClient.MatchPlayer.HandCards.Where(c => c.Card != CardManager.TheCoinCard && !chooseEntities.EntitiesList.Contains(c.EntityID)).ToList();
             foreach (MatchCard returnedCard in returnedCards)
             {
                 MatchCard newCard = pClient.MatchPlayer.DrawCard();
@@ -238,14 +239,23 @@ namespace Stonehearth.Game
                 pClient.Match.SendPowerHistoryZoneChange(returnedCard);
             }
             pClient.Match.SendPowerHistoryTagChange(pClient.MatchPlayer.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.WAITING));
-            pClient.Match.SendPowerHistoryEnd();
+            //pClient.Match.SendPowerHistoryEnd();
 
-            pClient.Match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, pClient.MatchPlayer.EntityID, 0);
+            //pClient.Match.SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, pClient.MatchPlayer.EntityID, 0);
             pClient.Match.SendPowerHistoryTagChange(pClient.MatchPlayer.SetTag(GAME_TAG.MULLIGAN_STATE, (int)TAG_MULLIGAN.DONE));
-            pClient.Match.SendPowerHistoryTagChange(pClient.Match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_READY));
-            pClient.Match.SendPowerHistoryEnd();
+            pClient.Match.SendPowerHistoryTagChange(pClient.Match.FirstPlayer.SetTag(GAME_TAG.TURN_START, DateTime.UtcNow.ToUnixTimestamp()));
+            //pClient.Match.SendPowerHistoryTagChange(pClient.Match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_READY));
+            //pClient.Match.SendPowerHistoryEnd();
 
             pClient.Match.FlushPowerHistory();
+
+            List<MatchPlayer> realPlayers = pClient.Match.Players.FindAll(p => !p.AI);
+            if (Interlocked.Increment(ref pClient.Match.PlayersReady) == realPlayers.Count)
+            {
+                // This is only executed when the last non-AI player gets here
+                pClient.Match.PlayersReady = 0;
+                pClient.Match.StartTurn();
+            }
         }
     }
 }

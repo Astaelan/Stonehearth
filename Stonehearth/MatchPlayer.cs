@@ -15,9 +15,9 @@ namespace Stonehearth
         public GameClient Client = null;
         public long AccountID = 0;
         public int PlayerID = 0;
-        public CardAsset HeroCardAsset = null;
-        public CardAsset HeroPowerCardAsset = null;
-        public List<CardAsset> Cards = null;
+        public Data.Card HeroCardData = null;
+        public Data.Card HeroPowerCardData = null;
+        public List<Data.Card> Cards = null;
 
         public MatchCard HeroCard = null;
         public MatchCard HeroPowerCard = null;
@@ -26,7 +26,7 @@ namespace Stonehearth
 
         private PegasusGame.PowerHistory.Builder mPowerHistoryBuilder = PegasusGame.PowerHistory.CreateBuilder();
 
-        public MatchPlayer(Match pMatch, bool pAI, int pPlayerID, CardAsset pHeroCardAsset, CardAsset pHeroPowerCardAsset, List<CardAsset> pCards, long pClientHandle = 0, long pAccountID = 0)
+        public MatchPlayer(Match pMatch, bool pAI, int pPlayerID, Data.Card pHeroCardData, Data.Card pHeroPowerCardData, List<Data.Card> pCards, long pClientHandle = 0, long pAccountID = 0)
             : base(pMatch)
         {
             Match = pMatch;
@@ -34,12 +34,12 @@ namespace Stonehearth
             ClientHandle = pClientHandle;
             AccountID = pAccountID;
             PlayerID = pPlayerID;
-            HeroCardAsset = pHeroCardAsset;
-            HeroPowerCardAsset = pHeroPowerCardAsset;
+            HeroCardData = pHeroCardData;
+            HeroPowerCardData = pHeroPowerCardData;
             Cards = ShuffleCards(pCards);
 
-            HeroCard = new MatchCard(pMatch, this, HeroCardAsset);
-            HeroPowerCard = new MatchCard(pMatch, this, HeroPowerCardAsset);
+            HeroCard = new MatchCard(pMatch, this, HeroCardData);
+            HeroPowerCard = new MatchCard(pMatch, this, HeroPowerCardData);
 
             Cards.ForEach(c => DeckCards.Add(new MatchCard(pMatch, this, c)));
 
@@ -57,11 +57,11 @@ namespace Stonehearth
             HeroPowerCard.SetTag(GAME_TAG.CREATOR, HeroCard.EntityID);
         }
 
-        private static List<CardAsset> ShuffleCards(List<CardAsset> pCards)
+        private static List<Data.Card> ShuffleCards(List<Data.Card> pCards)
         {
             Random random = new Random();
-            List<CardAsset> unshuffled = new List<CardAsset>(pCards);
-            List<CardAsset> shuffled = new List<CardAsset>(pCards.Count);
+            List<Data.Card> unshuffled = new List<Data.Card>(pCards);
+            List<Data.Card> shuffled = new List<Data.Card>(pCards.Count);
             while (unshuffled.Count > 0)
             {
                 int index = random.Next(0, unshuffled.Count - 1);
@@ -69,6 +69,12 @@ namespace Stonehearth
                 unshuffled.RemoveAt(index);
             }
             return shuffled;
+        }
+
+        public void SendPacket(Packet pPacket)
+        {
+            if (Client == null) return;
+            Client.SendPacket(pPacket);
         }
 
         public MatchCard DrawCard()
@@ -110,6 +116,11 @@ namespace Stonehearth
         public void SendPowerHistoryShowEntity(PowerHistoryEntity pPowerHistoryEntity)
         {
             SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetShowEntity(pPowerHistoryEntity).Build());
+        }
+
+        public void SendPowerHistoryTagChange(PowerHistoryTagChange pPowerHistoryTagChange)
+        {
+            SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetTagChange(pPowerHistoryTagChange).Build());
         }
 
         public PegasusGame.Player ToPlayer()

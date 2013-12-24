@@ -22,6 +22,7 @@ namespace Stonehearth
         public List<MatchPlayer> Players = new List<MatchPlayer>();
 
         private int mLastEntityID = 0;
+        private int mLastOptionsID = 0;
 
         public MatchEntity GameEntity = null;
         public int Turn = 1;
@@ -44,7 +45,7 @@ namespace Stonehearth
         //    return matchEntity;
         //}
 
-        public MatchPlayer CreatePlayer(bool pAI, CardAsset pHeroCard, CardAsset pHeroPowerCard, List<CardAsset> pCards, long pClientID = 0, long pAccountID = 0)
+        public MatchPlayer CreatePlayer(bool pAI, Data.Card pHeroCard, Data.Card pHeroPowerCard, List<Data.Card> pCards, long pClientID = 0, long pAccountID = 0)
         {
             MatchPlayer matchPlayer = new MatchPlayer(this, pAI, Interlocked.Increment(ref mLastPlayerID), pHeroCard, pHeroPowerCard, pCards, pClientID, pAccountID);
             Players.Add(matchPlayer);
@@ -119,7 +120,54 @@ namespace Stonehearth
             SendPowerHistoryData(PowerHistoryData.CreateBuilder().SetPowerEnd(PowerHistoryEnd.CreateBuilder()).Build(), pExceptMatchPlayers);
         }
 
-        
+
+        public void StartTurn()
+        {
+            SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_READY));
+            //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, FirstPlayer.EntityID, 0);
+            SendPowerHistoryTagChange(CurrentPlayer.HeroCard.SetTag(GAME_TAG.NUM_TURNS_IN_PLAY, 1));
+            SendPowerHistoryTagChange(CurrentPlayer.HeroPowerCard.SetTag(GAME_TAG.NUM_TURNS_IN_PLAY, 1));
+            SendPowerHistoryTagChange(CurrentPlayer.SetTag(GAME_TAG.RESOURCES, 1));
+            //SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_START_TRIGGERS));
+            //SendPowerHistoryEnd();
+            SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_START_TRIGGERS));
+
+            //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, CurrentPlayer.EntityID, 0);
+            //SendPowerHistoryTagChange(pClient.Match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_START));
+            //SendPowerHistoryEnd();
+            SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_START));
+
+            //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, CurrentPlayer.EntityID, 0);
+            MatchCard matchCard = CurrentPlayer.DrawCard();
+            CurrentPlayer.SendPowerHistoryShowEntity(matchCard.ToShownPowerHistoryEntity());
+            SendPowerHistoryZoneChange(matchCard, CurrentPlayer);
+            //SendPowerHistoryTagChange(pClient.Match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_ACTION));
+            //SendPowerHistoryEnd();
+            SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_ACTION));
+
+            //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, CurrentPlayer.EntityID, 0);
+            //SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_END));
+            //SendPowerHistoryEnd();
+
+            AllOptions allOptions = GetCurrentPlayerOptions();
+            if (!CurrentPlayer.AI) CurrentPlayer.SendPowerHistoryTagChange(CurrentPlayer.SetTag(GAME_TAG.NUM_OPTIONS, allOptions.OptionsCount));
+
+            FlushPowerHistory();
+
+            CurrentPlayer.SendPacket(new Packet((int)AllOptions.Types.PacketID.ID, allOptions.ToByteArray()));
+        }
+
+        public AllOptions GetCurrentPlayerOptions()
+        {
+            AllOptions.Builder allOptionsBuilder = AllOptions.CreateBuilder();
+            allOptionsBuilder.SetId(Interlocked.Increment(ref mLastOptionsID));
+            allOptionsBuilder.AddOptions(PegasusGame.Option.CreateBuilder().SetType(PegasusGame.Option.Types.Type.END_TURN));
+            foreach (MatchCard matchCard in CurrentPlayer.HandCards)
+            {
+            }
+            return allOptionsBuilder.Build();
+        }
+
         //public bool Player1GoesFirst = false;
         //public long Player1AccountID = 0;
         //public long Player2AccountID = 0;

@@ -46,7 +46,7 @@ namespace Stonehearth.Lobby
             email = email.ToLower();
 
             Packet packet = new Packet((int)InternalPacketID.Authenticate);
-            using (SqlConnection db = DB.Open())
+            using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
                 using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [Password] FROM [Account] WHERE [Email]=@0", email))
                 {
@@ -88,7 +88,7 @@ namespace Stonehearth.Lobby
             }
 
             Packet packet = new Packet((int)InternalPacketID.Authorize);
-            using (SqlConnection db = DB.Open())
+            using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
                 using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [AccountID],[SessionHost] FROM [Account] WHERE [SessionID]=@0", session))
                 {
@@ -161,9 +161,9 @@ namespace Stonehearth.Lobby
 
             Match match = MatchManager.CreateMatch();
             MatchPlayer matchPlayer1 = null;
-            List<CardAsset> player1Cards = new List<CardAsset>();
+            List<Data.Card> player1Cards = new List<Data.Card>();
 
-            using (SqlConnection db = DB.Open())
+            using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
                 TAG_CLASS player1Class = TAG_CLASS.INVALID;
                 using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [Hero] FROM [Deck] WHERE [DeckID]=@0", deckID))
@@ -182,13 +182,13 @@ namespace Stonehearth.Lobby
                     {
                         int quantity = (int)dr["Quantity"];
                         string cardID = (string)dr["CardID"];
-                        for (int index = 0; index < quantity; ++index) player1Cards.Add(CardManager.AllCardAssetsByCardID[cardID]);
+                        for (int index = 0; index < quantity; ++index) player1Cards.Add(CardManager.CardsByCardID[cardID]);
                     }
                 }
 
                 matchPlayer1 = match.CreatePlayer(false,
-                                                  CardManager.CoreHeroCardAssetsByClassID[player1Class],
-                                                  CardManager.CoreHeroPowerCardAssetsByClassID[player1Class],
+                                                  CardManager.CoreHeroCardsByClassID[player1Class],
+                                                  CardManager.CoreHeroPowerCardsByClassID[player1Class],
                                                   player1Cards,
                                                   pClient.ClientHandle,
                                                   pClient.AccountID);
@@ -196,8 +196,8 @@ namespace Stonehearth.Lobby
 
             // TODO: Temporary for now, until decks are in for AI's
             MatchPlayer matchPlayer2 = match.CreatePlayer(true,
-                                                          matchPlayer1.HeroCardAsset,
-                                                          matchPlayer1.HeroPowerCardAsset,
+                                                          matchPlayer1.HeroCardData,
+                                                          matchPlayer1.HeroPowerCardData,
                                                           player1Cards);
 
             Packet packet = new Packet((int)InternalPacketID.StartScenario);

@@ -8,9 +8,9 @@ namespace Stonehearth
     public sealed class MatchCard : MatchEntity
     {
         public MatchPlayer Owner = null;
-        public CardAsset Card = null;
+        public Data.Card Card = null;
 
-        public MatchCard(Match pMatch, MatchPlayer pOwner, CardAsset pCard)
+        public MatchCard(Match pMatch, MatchPlayer pOwner, Data.Card pCard)
             : base(pMatch)
         {
             Owner = pOwner;
@@ -18,8 +18,8 @@ namespace Stonehearth
 
             Name = Card.CardID;
 
-            SetTag(GAME_TAG.CARDTYPE, (int)Card.CardType);
-            SetTag(GAME_TAG.CARD_SET, (int)Card.CardSet);
+            SetTag(GAME_TAG.CARDTYPE, (int)Card.Type);
+            SetTag(GAME_TAG.CARD_SET, (int)Card.Set);
 
             SetTag(GAME_TAG.ZONE, (int)TAG_ZONE.DECK);
             SetTag(GAME_TAG.ZONE_POSITION, 0);
@@ -56,6 +56,7 @@ namespace Stonehearth
             if (Card.Combo.HasValue) SetTag(GAME_TAG.COMBO, Convert.ToInt32(Card.Combo.Value));
             if (Card.Silence.HasValue) SetTag(GAME_TAG.SILENCE, Convert.ToInt32(Card.Silence.Value));
             if (Card.Summoned.HasValue) SetTag(GAME_TAG.SUMMONED, Convert.ToInt32(Card.Summoned.Value));
+            if (Card.ImmuneToSpellpower.HasValue) SetTag((GAME_TAG)349, Convert.ToInt32(Card.ImmuneToSpellpower.Value));
             if (Card.Poisonous.HasValue) SetTag(GAME_TAG.POISONOUS, Convert.ToInt32(Card.Poisonous.Value));
         }
     }

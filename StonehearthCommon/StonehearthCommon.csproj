@@ -49,11 +49,14 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BundleReader.cs" />
     <Compile Include="ByteArraySegment.cs" />
     <Compile Include="Client.cs" />
+    <Compile Include="DB.cs" />
     <Compile Include="DumpFrames\GameStartedFrame.cs" />
     <Compile Include="DumpFrames\GameFinishedFrame.cs" />
     <Compile Include="DumpFrames\StartScenarioAIFrame.cs" />
