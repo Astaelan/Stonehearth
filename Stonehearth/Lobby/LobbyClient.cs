@@ -11,7 +11,7 @@ namespace Stonehearth.Lobby
         public LobbyClientProtocolState ProtocolState = LobbyClientProtocolState.Handshake;
         public Guid AuthenticateSalt = Guid.NewGuid();
         public Guid AuthenticateSession = Guid.NewGuid();
-        public long AccountID = 0;
+        public Data.Account Account = null;
         public long ClientHandle = 0;
 
         public void SendUtilPacket(int pPacketID, int pContext, byte[] pData, bool pFlushThenDisconnect = false)

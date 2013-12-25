@@ -18,10 +18,10 @@ namespace StonehearthExporter
             string basePath = Path.GetDirectoryName(Settings.Default.ExecutablePath) + Path.DirectorySeparatorChar;
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                db.Execute(null, "DELETE FROM [Achieve]");
+                db.Execute(null, "DELETE FROM [Achievement]");
 
                 DataTable dataTableAchieve = new DataTable();
-                dataTableAchieve.Columns.Add("AchieveID", typeof(int));
+                dataTableAchieve.Columns.Add("AchievementID", typeof(int));
                 dataTableAchieve.Columns.Add("Group", typeof(string));
                 dataTableAchieve.Columns.Add("MaxProgress", typeof(int));
                 dataTableAchieve.Columns.Add("RaceRequirement", typeof(int));
@@ -51,7 +51,7 @@ namespace StonehearthExporter
                         int.Parse(fields[9]),
                         fields[10]);
                 }
-                new SqlBulkCopy(db) { DestinationTableName = "Achieve" }.WriteToServer(dataTableAchieve);
+                new SqlBulkCopy(db) { DestinationTableName = "Achievement" }.WriteToServer(dataTableAchieve);
 
                 // Start of Bundle Processing
                 BundleReader reader = new BundleReader(File.ReadAllBytes(basePath + "Data" + Path.DirectorySeparatorChar + "Win" + Path.DirectorySeparatorChar + "cardxml0.unity3d"));
@@ -208,22 +208,17 @@ namespace StonehearthExporter
                 dataTableCard.Columns.Add("Poisonous", typeof(bool));
                 dataTableCard.Columns.Add("HealTarget", typeof(bool));
 
-                db.Execute(null, "DELETE FROM [Power]");
-
-                DataTable dataTablePower = new DataTable();
-                dataTablePower.Columns.Add("PowerID", typeof(Guid));
-
                 db.Execute(null, "DELETE FROM [CardPower]");
 
                 DataTable dataTableCardPower = new DataTable();
+                dataTableCardPower.Columns.Add("CardPowerID", typeof(Guid));
                 dataTableCardPower.Columns.Add("CardID", typeof(string));
-                dataTableCardPower.Columns.Add("PowerID", typeof(Guid));
 
-                db.Execute(null, "DELETE FROM [PowerRequirement]");
-                DataTable dataTablePowerRequirement = new DataTable();
-                dataTablePowerRequirement.Columns.Add("PowerID", typeof(Guid));
-                dataTablePowerRequirement.Columns.Add("Type", typeof(string));
-                dataTablePowerRequirement.Columns.Add("Parameter", typeof(int));
+                db.Execute(null, "DELETE FROM [CardPowerRequirement]");
+                DataTable dataTableCardPowerRequirement = new DataTable();
+                dataTableCardPowerRequirement.Columns.Add("CardPowerID", typeof(Guid));
+                dataTableCardPowerRequirement.Columns.Add("Type", typeof(string));
+                dataTableCardPowerRequirement.Columns.Add("Parameter", typeof(int));
 
                 // Start of Manifest Processing
                 HashSet<string> unhandledTags = new HashSet<string>();
@@ -358,30 +353,26 @@ namespace StonehearthExporter
                     foreach (XmlNode powerNode in doc.DocumentElement.GetElementsByTagName("Power"))
                     {
                         Guid powerID = new Guid(powerNode.Attributes["definition"].Value);
-                        dataRow = dataTablePower.NewRow();
-                        dataRow["PowerID"] = powerID;
-                        dataTablePower.Rows.Add(dataRow);
 
                         dataRow = dataTableCardPower.NewRow();
+                        dataRow["CardPowerID"] = powerID;
                         dataRow["CardID"] = cardID;
-                        dataRow["PowerID"] = powerID;
                         dataTableCardPower.Rows.Add(dataRow);
 
                         foreach (XmlNode playRequirementNode in ((XmlElement)powerNode).GetElementsByTagName("PlayRequirement"))
                         {
-                            dataRow = dataTablePowerRequirement.NewRow();
-                            dataRow["PowerID"] = powerID;
+                            dataRow = dataTableCardPowerRequirement.NewRow();
+                            dataRow["CardPowerID"] = powerID;
                             dataRow["Type"] = ((PlayErrors.ErrorType)int.Parse(playRequirementNode.Attributes["reqID"].Value)).ToString();
                             string param = playRequirementNode.Attributes["param"].Value;
                             if (!string.IsNullOrEmpty(param)) dataRow["Parameter"] = int.Parse(param);
-                            dataTablePowerRequirement.Rows.Add(dataRow);
+                            dataTableCardPowerRequirement.Rows.Add(dataRow);
                         }
                     }
                 }
                 new SqlBulkCopy(db) { DestinationTableName = "Card" }.WriteToServer(dataTableCard);
-                new SqlBulkCopy(db) { DestinationTableName = "Power" }.WriteToServer(dataTablePower);
                 new SqlBulkCopy(db) { DestinationTableName = "CardPower" }.WriteToServer(dataTableCardPower);
-                new SqlBulkCopy(db) { DestinationTableName = "PowerRequirement" }.WriteToServer(dataTablePowerRequirement);
+                new SqlBulkCopy(db) { DestinationTableName = "CardPowerRequirement" }.WriteToServer(dataTableCardPowerRequirement);
                 // End of Manifest Processing
             }
         }

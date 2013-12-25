@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Stonehearth.Data
 {
-    public class Achieve
+    public class Achievement
     {
-        public int AchieveID { get; set; }
+        public int AchievementID { get; set; }
         public string Group { get; set; }
         public int MaxProgress { get; set; }
         public int RaceRequirement { get; set; }

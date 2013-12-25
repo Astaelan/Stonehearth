@@ -1,4 +1,5 @@
-﻿using Stonehearth.Properties;
+﻿using Dapper;
+using Stonehearth.Properties;
 using StonehearthCommon;
 using System;
 using System.Collections.Generic;
@@ -90,6 +91,7 @@ namespace Stonehearth.Lobby
             Packet packet = new Packet((int)InternalPacketID.Authorize);
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
+                long accountID = 0;
                 using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [AccountID],[SessionHost] FROM [Account] WHERE [SessionID]=@0", session))
                 {
                     if (!dr.Read())
@@ -104,9 +106,10 @@ namespace Stonehearth.Lobby
                         pClient.SendPacket(packet, true);
                         return;
                     }
-                    pClient.AccountID = (long)dr["AccountID"];
+                    accountID = (long)dr["AccountID"];
                 }
-                db.Execute(null, "UPDATE [Account] SET [SessionID]=NULL,[SessionHost]=NULL,[SessionExpiration]=NULL WHERE [AccountID]=@0", pClient.AccountID);
+                db.Execute(null, "UPDATE [Account] SET [SessionID]=NULL,[SessionHost]=NULL,[SessionExpiration]=NULL WHERE [AccountID]=@0", accountID);
+                pClient.Account = Data.Account.Load(db, accountID);
             }
 
 
@@ -115,7 +118,7 @@ namespace Stonehearth.Lobby
             pClient.Log(LogManagerLevel.Info, "Authorized: {0}", session);
 
             packet.WriteInt(0);
-            packet.WriteLong(pClient.AccountID);
+            packet.WriteLong(pClient.Account.AccountID);
             pClient.SendPacket(packet);
         }
 
@@ -163,36 +166,26 @@ namespace Stonehearth.Lobby
             MatchPlayer matchPlayer1 = null;
             List<Data.Card> player1Cards = new List<Data.Card>();
 
-            using (SqlConnection db = DB.Open(Settings.Default.Database))
+            Data.AccountDeck accountDeck = pClient.Account.Decks.Find(d => d.AccountDeckID == deckID);
+            if (accountDeck == null)
             {
-                TAG_CLASS player1Class = TAG_CLASS.INVALID;
-                using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [Hero] FROM [Deck] WHERE [DeckID]=@0", deckID))
-                {
-                    if (!dr.Read())
-                    {
-                        MatchManager.MatchByGameHandle.Remove(match.GameHandle);
-                        pClient.Disconnect();
-                        return;
-                    }
-                    player1Class = (TAG_CLASS)(int)dr["Hero"];
-                }
-                using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [CardID],[Quantity] FROM [DeckCard] WHERE [DeckID]=@0", deckID))
-                {
-                    while (dr.Read())
-                    {
-                        int quantity = (int)dr["Quantity"];
-                        string cardID = (string)dr["CardID"];
-                        for (int index = 0; index < quantity; ++index) player1Cards.Add(CardManager.CardsByCardID[cardID]);
-                    }
-                }
-
-                matchPlayer1 = match.CreatePlayer(false,
-                                                  CardManager.CoreHeroCardsByClassID[player1Class],
-                                                  CardManager.CoreHeroPowerCardsByClassID[player1Class],
-                                                  player1Cards,
-                                                  pClient.ClientHandle,
-                                                  pClient.AccountID);
+                MatchManager.MatchByGameHandle.Remove(match.GameHandle);
+                pClient.Disconnect();
+                return;
             }
+            TAG_CLASS player1Class = (TAG_CLASS)accountDeck.Hero;
+            foreach (Data.AccountDeckCard accountDeckCard in accountDeck.Cards)
+            {
+                for (int index = 0; index < accountDeckCard.Quantity; ++index)
+                    player1Cards.Add(CardManager.CardsByCardID[accountDeckCard.CardID]);
+            }
+
+            matchPlayer1 = match.CreatePlayer(false,
+                                                CardManager.CoreHeroCardsByClassID[player1Class],
+                                                CardManager.CoreHeroPowerCardsByClassID[player1Class],
+                                                player1Cards,
+                                                pClient.ClientHandle,
+                                                pClient.Account.AccountID);
 
             // TODO: Temporary for now, until decks are in for AI's
             MatchPlayer matchPlayer2 = match.CreatePlayer(true,

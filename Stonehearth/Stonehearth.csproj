@@ -66,11 +66,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CardManager.cs" />
+    <Compile Include="Data\AccountHero.cs" />
+    <Compile Include="Data\AccountRecord.cs" />
+    <Compile Include="Data\AccountDeckCard.cs" />
+    <Compile Include="Data\AccountDeck.cs" />
     <Compile Include="Data\Card.cs" />
     <Compile Include="Data\CardPower.cs" />
-    <Compile Include="Data\PowerRequirement.cs" />
-    <Compile Include="Data\Power.cs" />
-    <Compile Include="Data\Achieve.cs" />
+    <Compile Include="Data\Account.cs" />
+    <Compile Include="Data\AccountAchievement.cs" />
+    <Compile Include="Data\AccountCard.cs" />
+    <Compile Include="Data\CardPowerRequirement.cs" />
+    <Compile Include="Data\Achievement.cs" />
     <Compile Include="Lobby\LobbyUtilPacketHandlers.cs" />
     <Compile Include="Match.cs" />
     <Compile Include="MatchCard.cs" />

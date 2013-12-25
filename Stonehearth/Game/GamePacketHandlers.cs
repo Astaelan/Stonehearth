@@ -58,7 +58,7 @@ namespace Stonehearth.Game
             matchPlayer.Client = pClient;
 
             pClient.ProtocolState = GameClientProtocolState.GetGameState;
-            pClient.AccountID = lobbyClient.AccountID;
+            pClient.Account = lobbyClient.Account;
             pClient.Match = match;
             pClient.MatchPlayer = matchPlayer;
 

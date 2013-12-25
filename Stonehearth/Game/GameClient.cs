@@ -9,7 +9,7 @@ namespace Stonehearth.Game
     public sealed class GameClient : Client
     {
         public GameClientProtocolState ProtocolState = GameClientProtocolState.AuroraHandshake;
-        public long AccountID = 0;
+        public Data.Account Account = null;
         public Match Match = null;
         public MatchPlayer MatchPlayer = null;
     }

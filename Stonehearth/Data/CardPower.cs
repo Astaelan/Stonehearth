@@ -7,7 +7,9 @@ namespace Stonehearth.Data
 {
     public class CardPower
     {
+        public Guid CardPowerID { get; set; }
         public string CardID { get; set; }
-        public Guid PowerID { get; set; }
+
+        public List<CardPowerRequirement> Requirements = new List<CardPowerRequirement>();
     }
 }

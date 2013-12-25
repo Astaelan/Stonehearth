@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Stonehearth.Data
 {
-    public class PowerRequirement
+    public class CardPowerRequirement
     {
-        public Guid PowerID { get; set; }
+        public Guid CardPowerID { get; set; }
         public PlayErrors.ErrorType Type { get; set; }
         public int? Parameter { get; set; }
     }

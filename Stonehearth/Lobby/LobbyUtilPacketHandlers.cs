@@ -25,21 +25,12 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.BOOSTERS:
                         {
                             BoosterList.Builder boosterList = BoosterList.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [ExpertBoosters] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID))
+                            if (pClient.Account.ExpertBoosters > 0)
                             {
-                                if (!dr.Read())
-                                {
-                                    pClient.Disconnect();
-                                    return;
-                                }
-                                if ((int)dr["ExpertBoosters"] > 0)
-                                {
-                                    BoosterInfo.Builder boosterInfo = BoosterInfo.CreateBuilder();
-                                    boosterInfo.SetCount((int)dr["ExpertBoosters"]);
-                                    boosterInfo.SetType((int)BoosterType.EXPERT);
-                                    boosterList.AddList(boosterInfo);
-                                }
-
+                                BoosterInfo.Builder boosterInfo = BoosterInfo.CreateBuilder();
+                                boosterInfo.SetCount(pClient.Account.ExpertBoosters);
+                                boosterInfo.SetType((int)BoosterType.EXPERT);
+                                boosterList.AddList(boosterInfo);
                             }
                             pClient.SendUtilPacket((int)BoosterList.Types.PacketID.ID, pContext, boosterList.Build().ToByteArray());
                             break;
@@ -47,17 +38,9 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.CAMPAIGN_INFO:
                         {
                             ProfileProgress.Builder profileProgress = ProfileProgress.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [BestForge],[LastForge],[Progress] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID))
-                            {
-                                if (!dr.Read())
-                                {
-                                    pClient.Disconnect();
-                                    return;
-                                }
-                                profileProgress.SetProgress((long)dr["Progress"]);
-                                profileProgress.SetBestForge((int)dr["BestForge"]);
-                                if (profileProgress.BestForge > 0) profileProgress.SetLastForge(Date.CreateBuilder().FromDateTime((DateTime)dr["LastForge"]));
-                            }
+                            profileProgress.SetProgress((long)pClient.Account.Progress);
+                            profileProgress.SetBestForge(pClient.Account.BestForge);
+                            if (profileProgress.BestForge > 0) profileProgress.SetLastForge(Date.CreateBuilder().FromDateTime(pClient.Account.LastForge));
                             pClient.SendUtilPacket((int)ProfileProgress.Types.PacketID.ID, pContext, profileProgress.Build().ToByteArray());
                             break;
                         }
@@ -96,21 +79,18 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.DECK_LIST:
                         {
                             DeckList.Builder deckList = DeckList.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [DeckID],[Name],[Hero],[DeckType],[HeroPremium],[Box],[Validity] FROM [Deck] WHERE [AccountID]=@0", pClient.AccountID))
+                            foreach (Data.AccountDeck accountDeck in pClient.Account.Decks)
                             {
-                                while (dr.Read())
-                                {
-                                    DeckInfo.Builder deckInfo = DeckInfo.CreateBuilder();
+                                DeckInfo.Builder deckInfo = DeckInfo.CreateBuilder();
 
-                                    deckInfo.SetId((long)dr["DeckID"]);
-                                    deckInfo.SetName((string)dr["Name"]);
-                                    deckInfo.SetHero(CardManager.CoreHeroCardsByClassID[(TAG_CLASS)(int)dr["Hero"]].AssetID);
-                                    deckInfo.SetDeckType((DeckInfo.Types.DeckType)(int)dr["DeckType"]);
-                                    deckInfo.SetHeroPremium((int)dr["HeroPremium"]);
-                                    deckInfo.SetBox((int)dr["Box"]);
-                                    deckInfo.SetValidity((long)dr["Validity"]);
-                                    deckList.AddDecks(deckInfo);
-                                }
+                                deckInfo.SetId(accountDeck.AccountDeckID);
+                                deckInfo.SetName(accountDeck.Name);
+                                deckInfo.SetHero(CardManager.CoreHeroCardsByClassID[(TAG_CLASS)accountDeck.Hero].AssetID);
+                                deckInfo.SetDeckType(accountDeck.DeckType);
+                                deckInfo.SetHeroPremium((int)accountDeck.HeroPremium);
+                                deckInfo.SetBox((int)accountDeck.Box);
+                                deckInfo.SetValidity((long)accountDeck.Validity);
+                                deckList.AddDecks(deckInfo);
                             }
                             pClient.SendUtilPacket((int)DeckList.Types.PacketID.ID, pContext, deckList.Build().ToByteArray());
                             break;
@@ -118,25 +98,22 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.COLLECTION:
                         {
                             Collection.Builder collection = Collection.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [CardID],[Premium],[Count],[CountSeen],[LatestInserted] FROM [Collection] WHERE [AccountID]=@0", pClient.AccountID))
+                            foreach (Data.AccountCard accountCard in pClient.Account.Cards)
                             {
-                                while (dr.Read())
-                                {
-                                    CardStack.Builder cardStack = CardStack.CreateBuilder();
-                                    Data.Card card = null;
-                                    if (!CardManager.CardsByCardID.TryGetValue((string)dr["CardID"], out card)) continue;
+                                CardStack.Builder cardStack = CardStack.CreateBuilder();
+                                Data.Card card = null;
+                                if (!CardManager.CardsByCardID.TryGetValue(accountCard.CardID, out card)) continue;
 
-                                    PegasusShared.CardDef.Builder cardDefBuilder = PegasusShared.CardDef.CreateBuilder();
-                                    cardDefBuilder.SetAsset(card.AssetID);
-                                    cardDefBuilder.SetPremium((int)dr["Premium"]);
+                                PegasusShared.CardDef.Builder cardDefBuilder = PegasusShared.CardDef.CreateBuilder();
+                                cardDefBuilder.SetAsset(card.AssetID);
+                                cardDefBuilder.SetPremium((int)accountCard.Premium);
 
-                                    cardStack.SetCardDef(cardDefBuilder);
-                                    cardStack.SetCount((int)dr["Count"]);
-                                    cardStack.SetNumSeen((int)dr["CountSeen"]);
-                                    cardStack.SetLatestInsertDate(Date.CreateBuilder().FromDateTime((DateTime)dr["LatestInserted"]));
+                                cardStack.SetCardDef(cardDefBuilder);
+                                cardStack.SetCount((int)accountCard.Count);
+                                cardStack.SetNumSeen((int)accountCard.CountSeen);
+                                cardStack.SetLatestInsertDate(Date.CreateBuilder().FromDateTime(accountCard.LatestInserted));
 
-                                    collection.AddStacks(cardStack);
-                                }
+                                collection.AddStacks(cardStack);
                             }
                             pClient.SendUtilPacket((int)Collection.Types.PacketID.ID, pContext, collection.Build().ToByteArray());
                             break;
@@ -144,15 +121,7 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.DECK_LIMIT:
                         {
                             ProfileDeckLimit.Builder profileDeckLimit = ProfileDeckLimit.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [DeckLimit] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID))
-                            {
-                                if (!dr.Read())
-                                {
-                                    pClient.Disconnect();
-                                    return;
-                                }
-                                profileDeckLimit.SetDeckLimit((int)dr["DeckLimit"]);
-                            }
+                            profileDeckLimit.SetDeckLimit(pClient.Account.DeckLimit);
                             pClient.SendUtilPacket((int)ProfileDeckLimit.Types.PacketID.ID, pContext, profileDeckLimit.Build().ToByteArray());
                             break;
                         }
@@ -164,15 +133,7 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.ARCANE_DUST_BALANCE:
                         {
                             ArcaneDustBalance.Builder arcaneDustBalance = ArcaneDustBalance.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [ArcaneDustBalance] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID))
-                            {
-                                if (!dr.Read())
-                                {
-                                    pClient.Disconnect();
-                                    return;
-                                }
-                                arcaneDustBalance.SetBalance((long)dr["ArcaneDustBalance"]);
-                            }
+                            arcaneDustBalance.SetBalance(pClient.Account.ArcaneDustBalance);
                             pClient.SendUtilPacket((int)ArcaneDustBalance.Types.PacketID.ID, pContext, arcaneDustBalance.Build().ToByteArray());
                             break;
                         }
@@ -201,31 +162,24 @@ namespace Stonehearth.Lobby
                         {
                             PlayerRecords.Builder playerRecords = PlayerRecords.CreateBuilder();
                             Dictionary<NetCache.PlayerRecord.Type, PlayerRecord.Builder> playerRecordTotals = new Dictionary<NetCache.PlayerRecord.Type, PlayerRecord.Builder>();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [Type],[Hero],[Wins],[Losses],[Ties] FROM [PlayerRecord] WHERE [AccountID]=@0 ORDER BY [Type]", pClient.AccountID))
+                            foreach (Data.AccountRecord accountRecord in pClient.Account.Records)
                             {
-                                while (dr.Read())
+                                playerRecords.AddRecords(PlayerRecord.CreateBuilder().SetType((int)accountRecord.Type).SetWins(accountRecord.Wins).SetLosses(accountRecord.Losses).SetTies(accountRecord.Ties).SetData(CardManager.CoreHeroCardsByClassID[(TAG_CLASS)accountRecord.Hero].AssetID));
+                                if (accountRecord.Wins > 0 || accountRecord.Losses > 0 || accountRecord.Ties > 0)
                                 {
-                                    NetCache.PlayerRecord.Type type = (NetCache.PlayerRecord.Type)(int)dr["Type"];
-                                    int wins = (int)dr["Wins"];
-                                    int losses = (int)dr["Losses"];
-                                    int ties = (int)dr["Ties"];
-                                    playerRecords.AddRecords(PlayerRecord.CreateBuilder().SetType((int)type).SetWins(wins).SetLosses(losses).SetTies(ties).SetData(CardManager.CoreHeroCardsByClassID[(TAG_CLASS)(int)dr["Hero"]].AssetID));
-                                    if (wins > 0 || losses > 0 || ties > 0)
+                                    PlayerRecord.Builder playerRecord = null;
+                                    if (!playerRecordTotals.ContainsKey(accountRecord.Type))
                                     {
-                                        PlayerRecord.Builder playerRecord = null;
-                                        if (!playerRecordTotals.ContainsKey(type))
-                                        {
-                                            playerRecord = PlayerRecord.CreateBuilder();
-                                            playerRecord.SetType((int)type);
-                                            playerRecord.SetWins(0);
-                                            playerRecord.SetLosses(0);
-                                            playerRecord.SetTies(0);
-                                            playerRecordTotals[type] = playerRecord;
-                                        }
-                                        if (wins > 0) playerRecord.SetWins(playerRecord.Wins + wins);
-                                        if (losses > 0) playerRecord.SetLosses(playerRecord.Losses + losses);
-                                        if (ties > 0) playerRecord.SetTies(playerRecord.Ties + ties);
+                                        playerRecord = PlayerRecord.CreateBuilder();
+                                        playerRecord.SetType((int)accountRecord.Type);
+                                        playerRecord.SetWins(0);
+                                        playerRecord.SetLosses(0);
+                                        playerRecord.SetTies(0);
+                                        playerRecordTotals[accountRecord.Type] = playerRecord;
                                     }
+                                    if (accountRecord.Wins > 0) playerRecord.SetWins(playerRecord.Wins + accountRecord.Wins);
+                                    if (accountRecord.Losses > 0) playerRecord.SetLosses(playerRecord.Losses + accountRecord.Losses);
+                                    if (accountRecord.Ties > 0) playerRecord.SetTies(playerRecord.Ties + accountRecord.Ties);
                                 }
                             }
                             foreach (PlayerRecord.Builder playerRecord in playerRecordTotals.Values) playerRecords.AddRecords(playerRecord);
@@ -241,18 +195,10 @@ namespace Stonehearth.Lobby
                     case GetAccountInfo.Types.Request.GOLD_BALANCE:
                         {
                             GoldBalance.Builder goldBalance = GoldBalance.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [GoldBalance] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID))
-                            {
-                                if (!dr.Read())
-                                {
-                                    pClient.Disconnect();
-                                    return;
-                                }
-                                goldBalance.SetBonusBalance(0);
-                                goldBalance.SetCap(9999999);
-                                goldBalance.SetCappedBalance((long)dr["GoldBalance"]);
-                                goldBalance.SetCapWarning(2000);
-                            }
+                            goldBalance.SetBonusBalance(0);
+                            goldBalance.SetCap(9999999);
+                            goldBalance.SetCappedBalance(pClient.Account.GoldBalance);
+                            goldBalance.SetCapWarning(2000);
                             pClient.SendUtilPacket((int)GoldBalance.Types.PacketID.ID, pContext, goldBalance.Build().ToByteArray());
                             break;
                         }
@@ -271,21 +217,18 @@ namespace Stonehearth.Lobby
                             //byte[] buf = temp;
 
                             HeroXP.Builder heroXP = HeroXP.CreateBuilder();
-                            using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [ClassID],[Level],[CurrentXP] FROM [HeroXP] WHERE [AccountID]=@0", pClient.AccountID))
+                            foreach (Data.AccountHero accountHero in pClient.Account.Heros)
                             {
-                                while (dr.Read())
-                                {
-                                    HeroXPInfo.Builder heroXPInfo = HeroXPInfo.CreateBuilder();
-                                    heroXPInfo.SetClassId((int)dr["ClassID"]);
-                                    heroXPInfo.SetLevel((int)dr["Level"]);
-                                    heroXPInfo.SetCurrXp((long)dr["CurrentXP"]);
-                                    if (heroXPInfo.Level == 60) heroXPInfo.SetMaxXp(0);
-                                    else heroXPInfo.SetMaxXp(heroXPInfo.Level * 100);
-                                    //NextHeroLevelReward.Builder nextHeroLevelRewardBuilder = NextHeroLevelReward.CreateBuilder();
-                                    //nextHeroLevelRewardBuilder.SetLevel(1).SetRewardBooster(ProfileNoticeRewardCard.CreateBuilder().SetCard(PegasusShared.CardDef.CreateBuilder().Set ));
-                                    //heroXPInfoBuilder.SetNextReward(nextHeroLevelRewardBuilder);
-                                    heroXP.AddXpInfos(heroXPInfo);
-                                }
+                                HeroXPInfo.Builder heroXPInfo = HeroXPInfo.CreateBuilder();
+                                heroXPInfo.SetClassId((int)accountHero.ClassID);
+                                heroXPInfo.SetLevel((int)accountHero.Level);
+                                heroXPInfo.SetCurrXp((long)accountHero.CurrentXP);
+                                if (heroXPInfo.Level == 60) heroXPInfo.SetMaxXp(0);
+                                else heroXPInfo.SetMaxXp(heroXPInfo.Level * 100);
+                                //NextHeroLevelReward.Builder nextHeroLevelRewardBuilder = NextHeroLevelReward.CreateBuilder();
+                                //nextHeroLevelRewardBuilder.SetLevel(1).SetRewardBooster(ProfileNoticeRewardCard.CreateBuilder().SetCard(PegasusShared.CardDef.CreateBuilder().Set ));
+                                //heroXPInfoBuilder.SetNextReward(nextHeroLevelRewardBuilder);
+                                heroXP.AddXpInfos(heroXPInfo);
                             }
                             pClient.SendUtilPacket((int)HeroXP.Types.PacketID.ID, pContext, heroXP.Build().ToByteArray());
                             break;
@@ -318,7 +261,7 @@ namespace Stonehearth.Lobby
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
                 DateTime lastLoginDate = DateTime.UtcNow;
-                db.Execute(null, "UPDATE [Account] SET [LastLogin]=@0 WHERE [AccountID]=@1", lastLoginDate, pClient.AccountID);
+                db.Execute(null, "UPDATE [Account] SET [LastLogin]=@0 WHERE [AccountID]=@1", lastLoginDate, pClient.Account.AccountID);
 
                 pClient.SendUtilPacket((int)NOP.Types.PacketID.ID, pContext, NOP.CreateBuilder().Build().ToByteArray());
             }
@@ -389,25 +332,19 @@ namespace Stonehearth.Lobby
             pClient.Log(LogManagerLevel.Debug, "GetAchieves");
 
             Achieves.Builder achieves = Achieves.CreateBuilder();
-            using (SqlConnection db = DB.Open(Settings.Default.Database))
+            foreach (Stonehearth.Data.AccountAchievement accountAchievement in pClient.Account.Achievements)
             {
-                using (SqlDataReader dr = db.ExecuteReader(null, "SELECT * FROM [Achievement] WHERE [AccountID]=@0 ORDER BY [AchieveID]", pClient.AccountID))
-                {
-                    while (dr.Read())
-                    {
-                        Achieve.Builder achieve = Achieve.CreateBuilder();
-                        achieve.SetId((int)dr["AchieveID"]);
-                        achieve.SetProgress((int)dr["Progress"]);
-                        achieve.SetAckProgress((int)dr["AckProgress"]);
-                        achieve.SetCompletionCount((int)dr["CompletionCount"]);
-                        achieve.SetActive((bool)dr["Active"]);
-                        achieve.SetStartedCount((int)dr["StartedCount"]);
-                        achieve.SetDateGiven(Date.CreateBuilder().FromDateTime((DateTime)dr["Given"]));
-                        if (dr["Completed"] != DBNull.Value) achieve.SetDateCompleted(Date.CreateBuilder().FromDateTime((DateTime)dr["Completed"]));
-                        achieve.SetDoNotAck((bool)dr["DoNotAck"]);
-                        achieves.AddList(achieve);
-                    }
-                }
+                Achieve.Builder achieve = Achieve.CreateBuilder();
+                achieve.SetId(accountAchievement.AchievementID);
+                achieve.SetProgress(accountAchievement.Progress);
+                achieve.SetAckProgress(accountAchievement.AckProgress);
+                achieve.SetCompletionCount(accountAchievement.CompletionCount);
+                achieve.SetActive(accountAchievement.Active);
+                achieve.SetStartedCount(accountAchievement.StartedCount);
+                achieve.SetDateGiven(Date.CreateBuilder().FromDateTime(accountAchievement.Given));
+                if (accountAchievement.Completed.HasValue) achieve.SetDateCompleted(Date.CreateBuilder().FromDateTime(accountAchievement.Completed.Value));
+                achieve.SetDoNotAck(accountAchievement.DoNotAck);
+                achieves.AddList(achieve);
             }
             pClient.SendUtilPacket((int)Achieves.Types.PacketID.ID, pContext, achieves.Build().ToByteArray());
         }
@@ -472,7 +409,7 @@ namespace Stonehearth.Lobby
             BoosterContent.Builder boosterContent = BoosterContent.CreateBuilder();
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                if (db.ExecuteScalar<int>(null, "SELECT [ExpertBoosters] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID) <= 0)
+                if (pClient.Account.ExpertBoosters <= 0)
                 {
                     DBAction.Builder dbAction = DBAction.CreateBuilder();
                     dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
@@ -497,15 +434,31 @@ namespace Stonehearth.Lobby
                     if (rarity != TAG_RARITY.COMMON) includedRareOrBetter = true;
                     List<Data.Card> expertCollectibleCards = CardManager.ExpertCollectibleCardsByRarity[rarity];
                     Data.Card card = expertCollectibleCards[random.Next(0, expertCollectibleCards.Count - 1)];
-
-                    if (db.ExecuteScalar<int>(null, "SELECT COUNT(*) FROM [Collection] WHERE [AccountID]=@0 AND [CardID]=@1", pClient.AccountID, card.CardID) == 0)
-                        db.Execute(null, "INSERT INTO [Collection]([AccountID],[CardID],[Premium],[Count],[CountSeen],[LatestInserted]) VALUES(@0,@1,@2,@3,@4,@5)", pClient.AccountID, card.CardID, Convert.ToInt32(premium), 1, 0, insertDate);
+                    Data.AccountCard accountCard = pClient.Account.Cards.Find(c => c.CardID == card.CardID);
+                    if (accountCard == null)
+                    {
+                        accountCard = new Data.AccountCard()
+                        {
+                            AccountID = pClient.Account.AccountID,
+                            CardID = card.CardID,
+                            Premium = premium ? CardFlair.PremiumType.FOIL : CardFlair.PremiumType.STANDARD,
+                            Count = 1,
+                            CountSeen = 0,
+                            LatestInserted = insertDate,
+                        };
+                        pClient.Account.Cards.Add(accountCard);
+                        db.Execute(null, "INSERT INTO [AccountCard]([AccountID],[CardID],[Premium],[Count],[CountSeen],[LatestInserted]) VALUES(@0,@1,@2,@3,@4,@5)", accountCard.AccountID, accountCard.CardID, accountCard.Premium, accountCard.CountSeen, accountCard.CountSeen, accountCard.LatestInserted);
+                    }
                     else
                     {
+                        accountCard.Count++;
+                        if (premium) accountCard.Premium = CardFlair.PremiumType.FOIL;
+                        accountCard.LatestInserted = insertDate;
+
                         DB.QueryBuilder query = new DB.QueryBuilder();
-                        query.Append("UPDATE [Collection] SET [Count]=[Count]+1,");
-                        if (premium) query.Append("[Premium]=1,");
-                        query.Append("[LatestInserted]=@0 WHERE [AccountID]=@1 AND [CardID]=@2", insertDate, pClient.AccountID, card.CardID);
+                        query.Append("UPDATE [AccountCard] SET [Count]=[Count]+1,");
+                        if (premium) query.Append("[Premium]=@0,", CardFlair.PremiumType.FOIL.ToString());
+                        query.Append("[LatestInserted]=@0 WHERE [AccountID]=@1 AND [CardID]=@2", insertDate, pClient.Account.AccountID, card.CardID);
                         db.Execute(null, query);
                     }
 
@@ -514,7 +467,8 @@ namespace Stonehearth.Lobby
                     boosterCard.SetInsertDate(Date.CreateBuilder().FromDateTime(insertDate));
                     boosterContent.AddList(boosterCard);
                 }
-                db.Execute(null, "UPDATE [Account] SET [ExpertBoosters]=[ExpertBoosters]-1 WHERE [AccountID]=@0", pClient.AccountID);
+                pClient.Account.ExpertBoosters--;
+                db.Execute(null, "UPDATE [Account] SET [ExpertBoosters]=[ExpertBoosters]-1 WHERE [AccountID]=@0", pClient.Account.AccountID);
             }
             pClient.SendUtilPacket((int)BoosterContent.Types.PacketID.ID, pContext, boosterContent.Build().ToByteArray());
         }
@@ -527,31 +481,41 @@ namespace Stonehearth.Lobby
 
             int heroPremium = 0;
             if (createDeck.HasHeroPremium) heroPremium = createDeck.HeroPremium;
-            long deckID = 0;
+            Data.AccountDeck accountDeck = null;
+            if (pClient.Account.Decks.Count >= pClient.Account.DeckLimit)
+            {
+                DBAction.Builder dbAction = DBAction.CreateBuilder();
+                dbAction.SetResult(DBAction.Types.Result.E_CONSTRAINT);
+                dbAction.SetAction(DBAction.Types.Action.A_CREATE_DECK);
+                dbAction.SetMetaData(0);
+                pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
+                return;
+            }
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                int deckLimit = db.ExecuteScalar<int>(null, "SELECT [DeckLimit] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID);
-                if (db.ExecuteScalar<int>(null, "SELECT COUNT(*) FROM [Deck] WHERE [AccountID]=@0", pClient.AccountID) >= deckLimit)
+                accountDeck = new Data.AccountDeck()
                 {
-                    DBAction.Builder dbAction = DBAction.CreateBuilder();
-                    dbAction.SetResult(DBAction.Types.Result.E_CONSTRAINT);
-                    dbAction.SetAction(DBAction.Types.Action.A_CREATE_DECK);
-                    dbAction.SetMetaData(0);
-                    pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
-                    return;
-                }
-                deckID = db.ExecuteScalar<long>(null, "INSERT INTO [Deck]([AccountID],[Name],[Hero],[DeckType],[HeroPremium],[Box],[Validity]) OUTPUT INSERTED.[DeckID] VALUES(@0,@1,@2,@3,@4,@5,@6)", pClient.AccountID, createDeck.Name, (int)CardManager.CardsByAssetID[createDeck.Hero].Class, (int)DeckInfo.Types.DeckType.NORMAL_DECK, heroPremium, 0, 0);
+                    AccountID = pClient.Account.AccountID,
+                    Name = createDeck.Name,
+                    Hero = (int)CardManager.CardsByAssetID[createDeck.Hero].Class,
+                    DeckType = DeckInfo.Types.DeckType.NORMAL_DECK,
+                    HeroPremium = (CardFlair.PremiumType)heroPremium,
+                    Box = 0,
+                    Validity = (NetCache.DeckFlags)0,
+                };
+                pClient.Account.Decks.Add(accountDeck);
+                accountDeck.AccountDeckID = db.ExecuteScalar<long>(null, "INSERT INTO [AccountDeck]([AccountID],[Name],[Hero],[DeckType],[HeroPremium],[Box],[Validity]) OUTPUT INSERTED.[AccountDeckID] VALUES(@0,@1,@2,@3,@4,@5,@6)", accountDeck.AccountID, accountDeck.Name, (int)accountDeck.Hero, accountDeck.DeckType.ToString(), accountDeck.HeroPremium.ToString(), accountDeck.Box, accountDeck.Validity.ToString());
             }
 
             DeckCreated.Builder deckCreated = DeckCreated.CreateBuilder();
             DeckInfo.Builder deckInfo = DeckInfo.CreateBuilder();
-            deckInfo.SetId(deckID);
+            deckInfo.SetId(accountDeck.AccountDeckID);
             deckInfo.SetName(createDeck.Name);
             deckInfo.SetHero(createDeck.Hero);
             deckInfo.SetDeckType(DeckInfo.Types.DeckType.NORMAL_DECK);
             if (createDeck.HasHeroPremium) deckInfo.SetHeroPremium(createDeck.HeroPremium);
-            deckInfo.SetBox(0);
-            deckInfo.SetValidity(0);
+            deckInfo.SetBox(accountDeck.Box);
+            deckInfo.SetValidity((long)accountDeck.Validity);
             deckCreated.SetInfo(deckInfo);
             pClient.SendUtilPacket((int)DeckCreated.Types.PacketID.ID, pContext, deckCreated.Build().ToByteArray());
         }
@@ -562,18 +526,20 @@ namespace Stonehearth.Lobby
             DeleteDeck deleteDeck = DeleteDeck.ParseFrom(pData);
             pClient.Log(LogManagerLevel.Debug, "DeleteDeck");
 
+            Data.AccountDeck accountDeck = pClient.Account.Decks.Find(d => d.AccountDeckID == deleteDeck.Deck);
+            if (accountDeck == null)
+            {
+                DBAction.Builder dbAction = DBAction.CreateBuilder();
+                dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
+                dbAction.SetAction(DBAction.Types.Action.A_DELETE_DECK);
+                dbAction.SetMetaData(deleteDeck.Deck);
+                pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
+                return;
+            }
+            pClient.Account.Decks.Remove(accountDeck);
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                if (db.ExecuteScalar<int>(null, "SELECT COUNT(*) FROM [Deck] WHERE [AccountID]=@0 AND [DeckID]=@1", pClient.AccountID, deleteDeck.Deck) == 0)
-                {
-                    DBAction.Builder dbAction = DBAction.CreateBuilder();
-                    dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
-                    dbAction.SetAction(DBAction.Types.Action.A_DELETE_DECK);
-                    dbAction.SetMetaData(deleteDeck.Deck);
-                    pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
-                    return;
-                }
-                db.Execute(null, "DELETE FROM [Deck] WHERE [DeckID]=@0", deleteDeck.Deck);
+                db.Execute(null, "DELETE FROM [AccountDeck] WHERE [AccountDeckID]=@0", deleteDeck.Deck);
             }
 
             DeckDeleted.Builder deckDeleted = DeckDeleted.CreateBuilder();
@@ -587,18 +553,20 @@ namespace Stonehearth.Lobby
             RenameDeck renameDeck = RenameDeck.ParseFrom(pData);
             pClient.Log(LogManagerLevel.Debug, "RenameDeck");
 
+            Data.AccountDeck accountDeck = pClient.Account.Decks.Find(d => d.AccountDeckID == renameDeck.Deck);
+            if (accountDeck == null)
+            {
+                DBAction.Builder dbAction = DBAction.CreateBuilder();
+                dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
+                dbAction.SetAction(DBAction.Types.Action.A_RENAME_DECK);
+                dbAction.SetMetaData(renameDeck.Deck);
+                pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
+                return;
+            }
+            accountDeck.Name = renameDeck.Name;
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                if (db.ExecuteScalar<int>(null, "SELECT COUNT(*) FROM [Deck] WHERE [AccountID]=@0 AND [DeckID]=@1", pClient.AccountID, renameDeck.Deck) == 0)
-                {
-                    DBAction.Builder dbAction = DBAction.CreateBuilder();
-                    dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
-                    dbAction.SetAction(DBAction.Types.Action.A_RENAME_DECK);
-                    dbAction.SetMetaData(renameDeck.Deck);
-                    pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
-                    return;
-                }
-                db.Execute(null, "UPDATE [Deck] SET [Name]=@0 WHERE [DeckID]=@1", renameDeck.Name, renameDeck.Deck);
+                db.Execute(null, "UPDATE [AccountDeck] SET [Name]=@0 WHERE [AccountDeckID]=@1", renameDeck.Name, renameDeck.Deck);
             }
 
             DeckRenamed.Builder deckRenamed = DeckRenamed.CreateBuilder();
@@ -614,19 +582,31 @@ namespace Stonehearth.Lobby
             pClient.Log(LogManagerLevel.Debug, "DeckSetData");
 
             DBAction.Builder dbAction = DBAction.CreateBuilder();
+            Data.AccountDeck accountDeck = pClient.Account.Decks.Find(d => d.AccountDeckID == deckSetData.Deck);
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                if (db.ExecuteScalar<int>(null, "SELECT COUNT(*) FROM [Deck] WHERE [AccountID]=@0 AND [DeckID]=@1", pClient.AccountID, deckSetData.Deck) == 0)
-                    dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
+                if (accountDeck == null) dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
                 else
                 {
+                    accountDeck.Cards.Clear();
+
                     // TODO: CollectionDeckValidator? Otherwise manually check and update deck Validity
-                    db.Execute(null, "DELETE FROM [DeckCard] WHERE [DeckID]=@0", deckSetData.Deck);
+                    db.Execute(null, "DELETE FROM [AccountDeckCard] WHERE [AccountDeckID]=@0", deckSetData.Deck);
 
                     foreach (DeckCardData deckCardData in deckSetData.CardsList)
                     {
                         Data.Card card = CardManager.CardsByAssetID[deckCardData.Def.Asset];
-                        db.Execute(null, "INSERT INTO [DeckCard]([AccountID],[DeckID],[CardID],[Quantity],[Handle],[Previous]) VALUES(@0,@1,@2,@3,@4,@5)", pClient.AccountID, deckSetData.Deck, card.CardID, deckCardData.Qty, deckCardData.Handle, deckCardData.Prev);
+                        Data.AccountDeckCard accountDeckCard = new Data.AccountDeckCard()
+                        {
+                            AccountID = pClient.Account.AccountID,
+                            AccountDeckID = accountDeck.AccountDeckID,
+                            CardID = card.CardID,
+                            Quantity = deckCardData.Qty,
+                            Handle = deckCardData.Handle,
+                            Previous = deckCardData.Prev,
+                        };
+                        accountDeck.Cards.Add(accountDeckCard);
+                        db.Execute(null, "INSERT INTO [AccountDeckCard]([AccountID],[AccountDeckID],[CardID],[Quantity],[Handle],[Previous]) VALUES(@0,@1,@2,@3,@4,@5)", accountDeckCard.AccountID, accountDeckCard.AccountDeckID, accountDeckCard.CardID, accountDeckCard.Quantity, accountDeckCard.Handle, accountDeckCard.Previous);
                     }
 
                     dbAction.SetResult(DBAction.Types.Result.E_SUCCESS);
@@ -645,29 +625,24 @@ namespace Stonehearth.Lobby
 
             DeckContents.Builder deckContents = DeckContents.CreateBuilder();
             deckContents.SetDeck(getDeck.Deck);
-            using (SqlConnection db = DB.Open(Settings.Default.Database))
+            Data.AccountDeck accountDeck = pClient.Account.Decks.Find(d => d.AccountDeckID == getDeck.Deck);
+            if (accountDeck == null)
             {
-                if (db.ExecuteScalar<int>(null, "SELECT COUNT(*) FROM [Deck] WHERE [AccountID]=@0 AND [DeckID]=@1", pClient.AccountID, getDeck.Deck) == 0)
-                {
-                    DBAction.Builder dbAction = DBAction.CreateBuilder();
-                    dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
-                    dbAction.SetAction(DBAction.Types.Action.A_GET_DECK);
-                    dbAction.SetMetaData(getDeck.Deck);
-                    pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
-                    return;
-                }
-                using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [CardID],[Quantity],[Handle],[Previous] FROM [DeckCard] WHERE [DeckID]=@0 ORDER BY [Handle] ASC", getDeck.Deck))
-                {
-                    while (dr.Read())
-                    {
-                        DeckCardData.Builder deckCardData = DeckCardData.CreateBuilder();
-                        deckCardData.SetDef(PegasusShared.CardDef.CreateBuilder().SetAsset(CardManager.CardsByCardID[(string)dr["CardID"]].AssetID).SetPremium(0));
-                        deckCardData.SetQty((int)dr["Quantity"]);
-                        deckCardData.SetHandle((int)dr["Handle"]);
-                        deckCardData.SetPrev((int)dr["Previous"]);
-                        deckContents.AddCards(deckCardData);
-                    }
-                }
+                DBAction.Builder dbAction = DBAction.CreateBuilder();
+                dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
+                dbAction.SetAction(DBAction.Types.Action.A_GET_DECK);
+                dbAction.SetMetaData(getDeck.Deck);
+                pClient.SendUtilPacket((int)DBAction.Types.PacketID.ID, pContext, dbAction.Build().ToByteArray());
+                return;
+            }
+            foreach (Data.AccountDeckCard accountDeckCard in accountDeck.Cards)
+            {
+                DeckCardData.Builder deckCardData = DeckCardData.CreateBuilder();
+                deckCardData.SetDef(PegasusShared.CardDef.CreateBuilder().SetAsset(CardManager.CardsByCardID[accountDeckCard.CardID].AssetID).SetPremium(0));
+                deckCardData.SetQty(accountDeckCard.Quantity);
+                deckCardData.SetHandle(accountDeckCard.Handle);
+                deckCardData.SetPrev(accountDeckCard.Previous);
+                deckContents.AddCards(deckCardData);
             }
             pClient.SendUtilPacket((int)DeckContents.Types.PacketID.ID, pContext, deckContents.Build().ToByteArray());
         }
@@ -689,13 +664,14 @@ namespace Stonehearth.Lobby
 
                 using (SqlConnection db = DB.Open(Settings.Default.Database))
                 {
-                    if (db.ExecuteScalar<long>(null, "SELECT [GoldBalance] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID) < goldCost)
+                    if (pClient.Account.GoldBalance < goldCost)
                     {
                         purchaseWithGoldResponse.SetResult(PurchaseWithGoldResponse.Types.PurchaseResult.PR_INSUFFICIENT_FUNDS);
                     }
                     else
                     {
-                        db.Execute(null, "UPDATE [Account] SET [GoldBalance]=[GoldBalance]-@0,[ExpertBoosters]=[ExpertBoosters]+@1 WHERE [AccountID]=@2", goldCost, purchaseWithGold.Quantity, pClient.AccountID);
+                        pClient.Account.GoldBalance -= goldCost;
+                        db.Execute(null, "UPDATE [Account] SET [GoldBalance]=[GoldBalance]-@0,[ExpertBoosters]=[ExpertBoosters]+@1 WHERE [AccountID]=@2", goldCost, purchaseWithGold.Quantity, pClient.Account.AccountID);
                         purchaseWithGoldResponse.SetResult(PurchaseWithGoldResponse.Types.PurchaseResult.PR_SUCCESS);
                         purchaseWithGoldResponse.SetGoldUsed(goldCost);
                     }
@@ -730,61 +706,84 @@ namespace Stonehearth.Lobby
             {
                 if (buySellCard.Buying)
                 {
-                    long arcaneDustBalance = db.ExecuteScalar<long>(null, "SELECT [ArcaneDustBalance] FROM [Account] WHERE [AccountID]=@0", pClient.AccountID);
-                    using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [Count],[Premium] FROM [Collection] WHERE [AccountID]=@0 AND [CardID]=@1", pClient.AccountID, card.CardID))
+                    Data.AccountCard accountCard = pClient.Account.Cards.Find(c => c.CardID == card.CardID);
+                    int currentCount = 0;
+                    if (accountCard != null) currentCount = accountCard.Count;
+                    if (currentCount == 0 && buySellCard.Def.Premium != 0) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
+                    else if (currentCount > 0 && buySellCard.Def.Premium != (int)accountCard.Premium) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
+                    else if (pClient.Account.ArcaneDustBalance < (buyValue * buySellCount)) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
+                    else if (card.Set != TAG_CARD_SET.EXPERT1) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.SOULBOUND);
+                    else if (buySellCard.UnitBuyPrice != buyValue) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.WRONG_BUY_PRICE);
+                    else
                     {
-                        int currentCount = 0;
-                        if (dr.Read()) currentCount = (int)dr["Count"];
-                        if (currentCount == 0 && buySellCard.Def.Premium != 0) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
-                        else if (currentCount > 0 && buySellCard.Def.Premium != (int)dr["Premium"]) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
-                        else if (arcaneDustBalance < (buyValue * buySellCount)) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
-                        else if (card.Set != TAG_CARD_SET.EXPERT1) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.SOULBOUND);
-                        else if (buySellCard.UnitBuyPrice != buyValue) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.WRONG_BUY_PRICE);
+                        if (currentCount > 0)
+                        {
+                            accountCard.Count += buySellCount;
+                            accountCard.CountSeen = accountCard.Count;
+                            accountCard.LatestInserted = DateTime.UtcNow;
+                            db.Execute(null, "UPDATE [AccountCard] SET [Count]=[Count]+@0,[CountSeen]=[Count],[LatestInserted]=@1 WHERE [AccountID]=@2 AND [CardID]=@3", buySellCount, accountCard.LatestInserted, pClient.Account.AccountID, card.CardID);
+                        }
                         else
                         {
-                            if (currentCount > 0)
-                                db.Execute(null, "UPDATE [Collection] SET [Count]=[Count]+@0,[CountSeen]=[Count],[LatestInserted]=@1 WHERE [AccountID]=@2 AND [CardID]=@3", buySellCount, DateTime.UtcNow, pClient.AccountID, card.CardID);
-                            else
-                                db.Execute(null, "INSERT INTO [Collection]([AccountID],[CardID],[Premium],[Count],[CountSeen],[LatestInserted]) VALUES(@0,@1,@2,@3,@4,@5)", pClient.AccountID, card.CardID, buySellCard.Def.Premium, buySellCount, buySellCount, DateTime.UtcNow);
-                            db.Execute(null, "UPDATE [Account] SET [ArcaneDustBalance]=[ArcaneDustBalance]-@0 WHERE [AccountID]=@1", buyValue * buySellCount, pClient.AccountID);
-
-                            boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.BOUGHT);
-                            boughtSoldCard.SetDef(buySellCard.Def);
-                            boughtSoldCard.SetCount(buySellCount);
-                            boughtSoldCard.SetNerfed(false);
-                            boughtSoldCard.SetAmount(currentCount - buySellCount);
-                            boughtSoldCard.SetUnitSellPrice(sellValue);
-                            boughtSoldCard.SetUnitBuyPrice(buyValue);
+                            accountCard = new Data.AccountCard()
+                            {
+                                AccountID = pClient.Account.AccountID,
+                                CardID = card.CardID,
+                                Premium = (CardFlair.PremiumType)buySellCard.Def.Premium,
+                                Count = buySellCount,
+                                CountSeen = buySellCount,
+                                LatestInserted = DateTime.UtcNow,
+                            };
+                            pClient.Account.Cards.Add(accountCard);
+                            db.Execute(null, "INSERT INTO [AccountCard]([AccountID],[CardID],[Premium],[Count],[CountSeen],[LatestInserted]) VALUES(@0,@1,@2,@3,@4,@5)", accountCard.AccountID, accountCard.CardID, accountCard.Premium.ToString(), accountCard.Count, accountCard.CountSeen, accountCard.LatestInserted);
                         }
+                        pClient.Account.ArcaneDustBalance -= buyValue * buySellCount;
+                        db.Execute(null, "UPDATE [Account] SET [ArcaneDustBalance]=[ArcaneDustBalance]-@0 WHERE [AccountID]=@1", buyValue * buySellCount, pClient.Account.AccountID);
+
+                        boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.BOUGHT);
+                        boughtSoldCard.SetDef(buySellCard.Def);
+                        boughtSoldCard.SetCount(buySellCount);
+                        boughtSoldCard.SetNerfed(false);
+                        boughtSoldCard.SetAmount(currentCount - buySellCount);
+                        boughtSoldCard.SetUnitSellPrice(sellValue);
+                        boughtSoldCard.SetUnitBuyPrice(buyValue);
                     }
                 }
                 else
                 {
-                    using (SqlDataReader dr = db.ExecuteReader(null, "SELECT [Count],[Premium] FROM [Collection] WHERE [AccountID]=@0 AND [CardID]=@1", pClient.AccountID, card.CardID))
+                    Data.AccountCard accountCard = pClient.Account.Cards.Find(c => c.CardID == card.CardID);
+                    int currentCount = 0;
+                    if (accountCard != null) currentCount = accountCard.Count;
+                    if (currentCount == 0) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
+                    else if (buySellCard.Def.Premium != (int)accountCard.Premium) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
+                    else if (buySellCount > currentCount) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
+                    else if (card.Set != TAG_CARD_SET.EXPERT1) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.SOULBOUND);
+                    else if (buySellCard.UnitSellPrice != sellValue) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.WRONG_SELL_PRICE);
+                    else
                     {
-                        int currentCount = 0;
-                        if (dr.Read()) currentCount = (int)dr["Count"];
-                        if (currentCount == 0) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
-                        else if (buySellCard.Def.Premium != (int)dr["Premium"]) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
-                        else if (buySellCount > currentCount) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.FAILED);
-                        else if (card.Set != TAG_CARD_SET.EXPERT1) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.SOULBOUND);
-                        else if (buySellCard.UnitSellPrice != sellValue) boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.WRONG_SELL_PRICE);
+                        // TODO: Deal with decks which use the card(s) if the remaining count is less than 2
+                        if (buySellCount < currentCount)
+                        {
+                            accountCard.Count -= buySellCount;
+                            accountCard.CountSeen = accountCard.Count;
+                            accountCard.LatestInserted = DateTime.UtcNow;
+                            db.Execute(null, "UPDATE [AccountCard] SET [Count]=[Count]-@0,[CountSeen]=[Count],[LatestInserted]=@1 WHERE [AccountID]=@2 AND [CardID]=@3", buySellCount, accountCard.LatestInserted, pClient.Account.AccountID, card.CardID);
+                        }
                         else
                         {
-                            if (buySellCount < currentCount)
-                                db.Execute(null, "UPDATE [Collection] SET [Count]=[Count]-@0 WHERE [AccountID]=@1 AND [CardID]=@2", buySellCount, pClient.AccountID, card.CardID);
-                            else
-                                db.Execute(null, "DELETE FROM [Collection] WHERE [AccountID]=@0 AND [CardID]=@1", pClient.AccountID, card.CardID);
-                            db.Execute(null, "UPDATE [Account] SET [ArcaneDustBalance]=[ArcaneDustBalance]+@0 WHERE [AccountID]=@1", sellValue * buySellCount, pClient.AccountID);
-
-                            boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.SOLD);
-                            boughtSoldCard.SetDef(buySellCard.Def);
-                            boughtSoldCard.SetCount(buySellCount);
-                            boughtSoldCard.SetNerfed(false);
-                            boughtSoldCard.SetAmount(currentCount - buySellCount);
-                            boughtSoldCard.SetUnitSellPrice(sellValue);
-                            boughtSoldCard.SetUnitBuyPrice(buyValue);
+                            pClient.Account.Cards.Remove(accountCard);
+                            db.Execute(null, "DELETE FROM [AccountCard] WHERE [AccountID]=@0 AND [CardID]=@1", pClient.Account.AccountID, card.CardID);
                         }
+                        pClient.Account.ArcaneDustBalance += sellValue * buySellCount;
+                        db.Execute(null, "UPDATE [Account] SET [ArcaneDustBalance]=[ArcaneDustBalance]+@0 WHERE [AccountID]=@1", sellValue * buySellCount, pClient.Account.AccountID);
+
+                        boughtSoldCard.SetResult(BoughtSoldCard.Types.Result.SOLD);
+                        boughtSoldCard.SetDef(buySellCard.Def);
+                        boughtSoldCard.SetCount(buySellCount);
+                        boughtSoldCard.SetNerfed(false);
+                        boughtSoldCard.SetAmount(currentCount - buySellCount);
+                        boughtSoldCard.SetUnitSellPrice(sellValue);
+                        boughtSoldCard.SetUnitBuyPrice(buyValue);
                     }
                 }
             }

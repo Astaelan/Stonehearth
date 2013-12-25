@@ -65,6 +65,6 @@ namespace Stonehearth.Data
         public bool? Poisonous { get; set; }
         public bool? HealTarget { get; set; }
 
-        public List<Power> Powers = new List<Power>();
+        public List<CardPower> Powers = new List<CardPower>();
     }
 }

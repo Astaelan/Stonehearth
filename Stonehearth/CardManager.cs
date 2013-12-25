@@ -14,11 +14,8 @@ namespace Stonehearth
 {
     public static class CardManager
     {
-        public static List<Data.Achieve> Achieves = null;
-        public static Dictionary<int, Data.Achieve> AchievesByAchieveID = new Dictionary<int, Data.Achieve>();
-
-        public static List<Data.Power> Powers = null;
-        public static Dictionary<Guid, Data.Power> PowersByPowerID = new Dictionary<Guid, Data.Power>();
+        public static List<Data.Achievement> Achievements = null;
+        public static Dictionary<int, Data.Achievement> AchievementsByAchievementID = new Dictionary<int, Data.Achievement>();
 
         public static List<Data.Card> Cards = null;
         public static Dictionary<string, Data.Card> CardsByCardID = new Dictionary<string, Data.Card>();
@@ -31,15 +28,14 @@ namespace Stonehearth
 
         public static CardValues CardValues = null;
 
+        public static Dictionary<Guid, Data.CardPower> CardPowersByCardPowerID = new Dictionary<Guid, Data.CardPower>();
+
         public static void Initialize()
         {
             using (SqlConnection db = DB.Open(Settings.Default.Database))
             {
-                Achieves = db.Query<Data.Achieve>("SELECT * FROM [Achieve]", null).ToList();
-                Achieves.ForEach(a => AchievesByAchieveID.Add(a.AchieveID, a));
-                Powers = db.Query<Data.Power>("SELECT * FROM [Power]", null).ToList();
-                Powers.ForEach(p => PowersByPowerID.Add(p.PowerID, p));
-                db.Query<Data.PowerRequirement>("SELECT * FROM [PowerRequirement]", null).ForEach(r => PowersByPowerID[r.PowerID].Requirements.Add(r));
+                Achievements = db.Query<Data.Achievement>("SELECT * FROM [Achievement]", null).ToList();
+                Achievements.ForEach(a => AchievementsByAchievementID.Add(a.AchievementID, a));
                 Cards = db.Query<Data.Card>("SELECT * FROM [Card]", null).ToList();
                 foreach (Data.Card card in Cards)
                 {
@@ -78,7 +74,15 @@ namespace Stonehearth
                     }
                     if (card.CardID == "GAME_005") TheCoinCard = card;
                 }
-                db.Query<Data.CardPower>("SELECT * FROM [CardPower]", null).ForEach(c => CardsByCardID[c.CardID].Powers.Add(PowersByPowerID[c.PowerID]));
+                foreach (Data.CardPower cardPower in db.Query<Data.CardPower>("SELECT * FROM [CardPower]", null))
+                {
+                    CardPowersByCardPowerID.Add(cardPower.CardPowerID, cardPower);
+                    CardsByCardID[cardPower.CardID].Powers.Add(cardPower);
+                }
+                foreach (Data.CardPowerRequirement cardPowerRequirement in db.Query<Data.CardPowerRequirement>("SELECT * FROM [CardPowerRequirement]", null))
+                {
+                    CardPowersByCardPowerID[cardPowerRequirement.CardPowerID].Requirements.Add(cardPowerRequirement);
+                }
             }
 
             CardValues.Builder cardValues = CardValues.CreateBuilder();
