@@ -26,9 +26,10 @@ namespace StonehearthCommon
 
         public static string ToSafeString(this Enum pThis)
         {
-            string[] names = Enum.GetNames(pThis.GetType());
-            Array values = Enum.GetValues(pThis.GetType());
-            return names[Array.IndexOf(values, pThis)];
+            return Enum.GetName(pThis.GetType(), pThis);
+            //string[] names = Enum.GetNames(pThis.GetType());
+            //Array values = Enum.GetValues(pThis.GetType());
+            //return names[Array.IndexOf(values, pThis)];
         }
     }
 }

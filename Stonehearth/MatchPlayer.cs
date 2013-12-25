@@ -26,6 +26,11 @@ namespace Stonehearth
 
         private PegasusGame.PowerHistory.Builder mPowerHistoryBuilder = PegasusGame.PowerHistory.CreateBuilder();
 
+        public int Resources = 0;
+        public int ResourcesUsed = 0;
+        public int ResourcesRemaining { get { return Resources - ResourcesUsed; } }
+        public bool HeroPowerExhausted = false;
+
         public MatchPlayer(Match pMatch, bool pAI, int pPlayerID, Data.Card pHeroCardData, Data.Card pHeroPowerCardData, List<Data.Card> pCards, long pClientHandle = 0, long pAccountID = 0)
             : base(pMatch)
         {
@@ -65,7 +70,8 @@ namespace Stonehearth
             while (unshuffled.Count > 0)
             {
                 int index = random.Next(0, unshuffled.Count - 1);
-                shuffled.Add(unshuffled[index]);
+                if (unshuffled[index].CardID == "CS2_168") shuffled.Insert(0, unshuffled[index]);
+                else shuffled.Add(unshuffled[index]);
                 unshuffled.RemoveAt(index);
             }
             return shuffled;

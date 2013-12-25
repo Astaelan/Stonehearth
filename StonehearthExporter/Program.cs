@@ -153,15 +153,15 @@ namespace StonehearthExporter
                 dataTableCard.Columns.Add("CardID", typeof(string));
                 dataTableCard.Columns.Add("AssetID", typeof(int));
                 dataTableCard.Columns.Add("Name", typeof(string));
-                dataTableCard.Columns.Add("Set", typeof(string));
-                dataTableCard.Columns.Add("Type", typeof(string));
+                dataTableCard.Columns.Add("Set", typeof(int));
+                dataTableCard.Columns.Add("Type", typeof(int));
                 dataTableCard.Columns.Add("Craftable", typeof(bool));
                 dataTableCard.Columns.Add("Collectible", typeof(bool));
                 dataTableCard.Columns.Add("MasterPowerID", typeof(Guid));
-                dataTableCard.Columns.Add("Faction", typeof(string));
-                dataTableCard.Columns.Add("Race", typeof(string));
-                dataTableCard.Columns.Add("Class", typeof(string));
-                dataTableCard.Columns.Add("Rarity", typeof(string));
+                dataTableCard.Columns.Add("Faction", typeof(int));
+                dataTableCard.Columns.Add("Race", typeof(int));
+                dataTableCard.Columns.Add("Class", typeof(int));
+                dataTableCard.Columns.Add("Rarity", typeof(int));
                 dataTableCard.Columns.Add("Cost", typeof(int));
                 dataTableCard.Columns.Add("Atk", typeof(int));
                 dataTableCard.Columns.Add("Health", typeof(int));
@@ -169,8 +169,8 @@ namespace StonehearthExporter
                 dataTableCard.Columns.Add("TextInHand", typeof(string));
                 dataTableCard.Columns.Add("TextInPlay", typeof(string));
                 dataTableCard.Columns.Add("DevState", typeof(int));
-                dataTableCard.Columns.Add("EnchantmentBirthVisual", typeof(string));
-                dataTableCard.Columns.Add("EnchantmentIdleVisual", typeof(string));
+                dataTableCard.Columns.Add("EnchantmentBirthVisual", typeof(int));
+                dataTableCard.Columns.Add("EnchantmentIdleVisual", typeof(int));
                 dataTableCard.Columns.Add("FlavorText", typeof(string));
                 dataTableCard.Columns.Add("ArtistName", typeof(string));
                 dataTableCard.Columns.Add("TargetingArrowText", typeof(string));
@@ -217,7 +217,7 @@ namespace StonehearthExporter
                 db.Execute(null, "DELETE FROM [CardPowerRequirement]");
                 DataTable dataTableCardPowerRequirement = new DataTable();
                 dataTableCardPowerRequirement.Columns.Add("CardPowerID", typeof(Guid));
-                dataTableCardPowerRequirement.Columns.Add("Type", typeof(string));
+                dataTableCardPowerRequirement.Columns.Add("Type", typeof(int));
                 dataTableCardPowerRequirement.Columns.Add("Parameter", typeof(int));
 
                 // Start of Manifest Processing
@@ -249,15 +249,15 @@ namespace StonehearthExporter
                             case "CardName": dataRow["Name"] = tagNode.ChildNodes.Item(0).InnerText; break;
                             case "CardSet":
                                 cardSet = (TAG_CARD_SET)int.Parse(tagNode.Attributes["value"].Value);
-                                dataRow["Set"] = cardSet.ToString();
+                                dataRow["Set"] = cardSet;
                                 break;
-                            case "CardType": dataRow["Type"] = ((TAG_CARDTYPE)int.Parse(tagNode.Attributes["value"].Value)).ToString(); break;
-                            case "Faction": dataRow["Faction"] = ((TAG_FACTION)int.Parse(tagNode.Attributes["value"].Value)).ToString(); break;
-                            case "Race": dataRow["Race"] = ((TAG_RACE)int.Parse(tagNode.Attributes["value"].Value)).ToString(); break;
-                            case "Class": dataRow["Class"] = ((TAG_CLASS)int.Parse(tagNode.Attributes["value"].Value)).ToString(); break;
+                            case "CardType": dataRow["Type"] = (TAG_CARDTYPE)int.Parse(tagNode.Attributes["value"].Value); break;
+                            case "Faction": dataRow["Faction"] = (TAG_FACTION)int.Parse(tagNode.Attributes["value"].Value); break;
+                            case "Race": dataRow["Race"] = (TAG_RACE)int.Parse(tagNode.Attributes["value"].Value); break;
+                            case "Class": dataRow["Class"] = (TAG_CLASS)int.Parse(tagNode.Attributes["value"].Value); break;
                             case "Rarity":
                                 rarity = (TAG_RARITY)int.Parse(tagNode.Attributes["value"].Value);
-                                dataRow["Rarity"] = rarity.ToString();
+                                dataRow["Rarity"] = rarity;
                                 break;
                             case "Cost": dataRow["Cost"] = int.Parse(tagNode.Attributes["value"].Value); break;
                             case "Atk": dataRow["Atk"] = int.Parse(tagNode.Attributes["value"].Value); break;
@@ -266,8 +266,8 @@ namespace StonehearthExporter
                             case "CardTextInHand": dataRow["TextInHand"] = tagNode.ChildNodes.Item(0).InnerText; break;
                             case "CardTextInPlay": dataRow["TextInPlay"] = tagNode.ChildNodes.Item(0).InnerText; break;
                             case "DevState": dataRow["DevState"] = int.Parse(tagNode.Attributes["value"].Value); break;
-                            case "EnchantmentBirthVisual": dataRow["EnchantmentBirthVisual"] = ((TAG_ENCHANTMENT_VISUAL)int.Parse(tagNode.Attributes["value"].Value)).ToString(); break;
-                            case "EnchantmentIdleVisual": dataRow["EnchantmentIdleVisual"] = ((TAG_ENCHANTMENT_VISUAL)int.Parse(tagNode.Attributes["value"].Value)).ToString(); break;
+                            case "EnchantmentBirthVisual": dataRow["EnchantmentBirthVisual"] = (TAG_ENCHANTMENT_VISUAL)int.Parse(tagNode.Attributes["value"].Value); break;
+                            case "EnchantmentIdleVisual": dataRow["EnchantmentIdleVisual"] = (TAG_ENCHANTMENT_VISUAL)int.Parse(tagNode.Attributes["value"].Value); break;
                             case "FlavorText": dataRow["FlavorText"] = tagNode.ChildNodes.Item(0).InnerText; break;
                             case "ArtistName": dataRow["ArtistName"] = tagNode.ChildNodes.Item(0).InnerText; break;
                             case "TargetingArrowText": dataRow["TargetingArrowText"] = tagNode.ChildNodes.Item(0).InnerText; break;
@@ -363,7 +363,7 @@ namespace StonehearthExporter
                         {
                             dataRow = dataTableCardPowerRequirement.NewRow();
                             dataRow["CardPowerID"] = powerID;
-                            dataRow["Type"] = ((PlayErrors.ErrorType)int.Parse(playRequirementNode.Attributes["reqID"].Value)).ToString();
+                            dataRow["Type"] = (PlayErrors.ErrorType)int.Parse(playRequirementNode.Attributes["reqID"].Value);
                             string param = playRequirementNode.Attributes["param"].Value;
                             if (!string.IsNullOrEmpty(param)) dataRow["Parameter"] = int.Parse(param);
                             dataTableCardPowerRequirement.Rows.Add(dataRow);

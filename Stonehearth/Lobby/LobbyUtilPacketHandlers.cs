@@ -457,7 +457,7 @@ namespace Stonehearth.Lobby
 
                         DB.QueryBuilder query = new DB.QueryBuilder();
                         query.Append("UPDATE [AccountCard] SET [Count]=[Count]+1,");
-                        if (premium) query.Append("[Premium]=@0,", CardFlair.PremiumType.FOIL.ToString());
+                        if (premium) query.Append("[Premium]=@0,", CardFlair.PremiumType.FOIL);
                         query.Append("[LatestInserted]=@0 WHERE [AccountID]=@1 AND [CardID]=@2", insertDate, pClient.Account.AccountID, card.CardID);
                         db.Execute(null, query);
                     }
@@ -504,7 +504,7 @@ namespace Stonehearth.Lobby
                     Validity = (NetCache.DeckFlags)0,
                 };
                 pClient.Account.Decks.Add(accountDeck);
-                accountDeck.AccountDeckID = db.ExecuteScalar<long>(null, "INSERT INTO [AccountDeck]([AccountID],[Name],[Hero],[DeckType],[HeroPremium],[Box],[Validity]) OUTPUT INSERTED.[AccountDeckID] VALUES(@0,@1,@2,@3,@4,@5,@6)", accountDeck.AccountID, accountDeck.Name, (int)accountDeck.Hero, accountDeck.DeckType.ToString(), accountDeck.HeroPremium.ToString(), accountDeck.Box, accountDeck.Validity.ToString());
+                accountDeck.AccountDeckID = db.ExecuteScalar<long>(null, "INSERT INTO [AccountDeck]([AccountID],[Name],[Hero],[DeckType],[HeroPremium],[Box],[Validity]) OUTPUT INSERTED.[AccountDeckID] VALUES(@0,@1,@2,@3,@4,@5,@6)", accountDeck.AccountID, accountDeck.Name, accountDeck.Hero, accountDeck.DeckType, accountDeck.HeroPremium, accountDeck.Box, accountDeck.Validity);
             }
 
             DeckCreated.Builder deckCreated = DeckCreated.CreateBuilder();
@@ -735,7 +735,7 @@ namespace Stonehearth.Lobby
                                 LatestInserted = DateTime.UtcNow,
                             };
                             pClient.Account.Cards.Add(accountCard);
-                            db.Execute(null, "INSERT INTO [AccountCard]([AccountID],[CardID],[Premium],[Count],[CountSeen],[LatestInserted]) VALUES(@0,@1,@2,@3,@4,@5)", accountCard.AccountID, accountCard.CardID, accountCard.Premium.ToString(), accountCard.Count, accountCard.CountSeen, accountCard.LatestInserted);
+                            db.Execute(null, "INSERT INTO [AccountCard]([AccountID],[CardID],[Premium],[Count],[CountSeen],[LatestInserted]) VALUES(@0,@1,@2,@3,@4,@5)", accountCard.AccountID, accountCard.CardID, accountCard.Premium, accountCard.Count, accountCard.CountSeen, accountCard.LatestInserted);
                         }
                         pClient.Account.ArcaneDustBalance -= buyValue * buySellCount;
                         db.Execute(null, "UPDATE [Account] SET [ArcaneDustBalance]=[ArcaneDustBalance]-@0 WHERE [AccountID]=@1", buyValue * buySellCount, pClient.Account.AccountID);

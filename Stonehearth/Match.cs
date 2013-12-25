@@ -123,18 +123,31 @@ namespace Stonehearth
 
         public void StartTurn()
         {
+            // NOTE: MAIN_READY seems to be game data updates for each turn
             SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_READY));
             //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, FirstPlayer.EntityID, 0);
-            SendPowerHistoryTagChange(CurrentPlayer.HeroCard.SetTag(GAME_TAG.NUM_TURNS_IN_PLAY, 1));
-            SendPowerHistoryTagChange(CurrentPlayer.HeroPowerCard.SetTag(GAME_TAG.NUM_TURNS_IN_PLAY, 1));
-            SendPowerHistoryTagChange(CurrentPlayer.SetTag(GAME_TAG.RESOURCES, 1));
+
+            SendPowerHistoryTagChange(CurrentPlayer.HeroCard.SetTag(GAME_TAG.NUM_TURNS_IN_PLAY, Turn));
+            SendPowerHistoryTagChange(CurrentPlayer.HeroPowerCard.SetTag(GAME_TAG.NUM_TURNS_IN_PLAY, Turn));
+
+            CurrentPlayer.Resources = Math.Min(10, Turn);
+            SendPowerHistoryTagChange(CurrentPlayer.SetTag(GAME_TAG.RESOURCES, CurrentPlayer.Resources));
+
+            CurrentPlayer.ResourcesUsed = 0;
+            CurrentPlayer.HeroPowerExhausted = false;
+
             //SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_START_TRIGGERS));
             //SendPowerHistoryEnd();
+
+
+            // NOTE: START_TRIGGERS seems to be where we do updates from powers that trigger at the start of turns
             SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_START_TRIGGERS));
 
             //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, CurrentPlayer.EntityID, 0);
             //SendPowerHistoryTagChange(pClient.Match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_START));
             //SendPowerHistoryEnd();
+
+            // NOTE: MAIN_START seems to be where we do our main card draw for the turn
             SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_START));
 
             //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, CurrentPlayer.EntityID, 0);
@@ -143,14 +156,23 @@ namespace Stonehearth
             SendPowerHistoryZoneChange(matchCard, CurrentPlayer);
             //SendPowerHistoryTagChange(pClient.Match.GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_ACTION));
             //SendPowerHistoryEnd();
+
+            // NOTE: MAIN_ACTION seems to be where we wait for an option to be choosen by a player (or processing for AI)
             SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.STEP, (int)TAG_STEP.MAIN_ACTION));
 
             //SendPowerHistoryStart(PowerHistoryStart.Types.Type.TRIGGER, -1, CurrentPlayer.EntityID, 0);
             //SendPowerHistoryTagChange(GameEntity.SetTag(GAME_TAG.NEXT_STEP, (int)TAG_STEP.MAIN_END));
             //SendPowerHistoryEnd();
 
+            // NOTE: Now we figure out what options are available for the current player and send them out
+            // unless it is an AI player, in which case we need to pick an available option, initial AI may
+            // be able to pick an option at random.
             AllOptions allOptions = GetCurrentPlayerOptions();
             if (!CurrentPlayer.AI) CurrentPlayer.SendPowerHistoryTagChange(CurrentPlayer.SetTag(GAME_TAG.NUM_OPTIONS, allOptions.OptionsCount));
+            else
+            {
+                // TODO: Picking an option and sending power history for it
+            }
 
             FlushPowerHistory();
 
@@ -162,8 +184,20 @@ namespace Stonehearth
             AllOptions.Builder allOptionsBuilder = AllOptions.CreateBuilder();
             allOptionsBuilder.SetId(Interlocked.Increment(ref mLastOptionsID));
             allOptionsBuilder.AddOptions(PegasusGame.Option.CreateBuilder().SetType(PegasusGame.Option.Types.Type.END_TURN));
+            if (!CurrentPlayer.HeroPowerExhausted && CurrentPlayer.HeroPowerCard.Card.Cost.GetValueOrDefault() < CurrentPlayer.ResourcesRemaining)
+            {
+                // TODO: Check requirements
+            }
             foreach (MatchCard matchCard in CurrentPlayer.HandCards)
             {
+                if (!matchCard.Card.Cost.HasValue) continue;
+                if (matchCard.Card.Cost.Value > CurrentPlayer.ResourcesRemaining) continue;
+                if (matchCard.Card.Powers.Count == 0)
+                {
+                    allOptionsBuilder.AddOptions(PegasusGame.Option.CreateBuilder().SetType(PegasusGame.Option.Types.Type.POWER).SetMainOption(PegasusGame.SubOption.CreateBuilder().SetId(matchCard.EntityID)));
+                    continue;
+                }
+                // TODO: Check requirements
             }
             return allOptionsBuilder.Build();
         }
