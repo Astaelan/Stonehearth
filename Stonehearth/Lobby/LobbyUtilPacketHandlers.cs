@@ -588,25 +588,39 @@ namespace Stonehearth.Lobby
                 if (accountDeck == null) dbAction.SetResult(DBAction.Types.Result.E_NOT_FOUND);
                 else
                 {
-                    accountDeck.Cards.Clear();
-
-                    // TODO: CollectionDeckValidator? Otherwise manually check and update deck Validity
-                    db.Execute(null, "DELETE FROM [AccountDeckCard] WHERE [AccountDeckID]=@0", deckSetData.Deck);
-
                     foreach (DeckCardData deckCardData in deckSetData.CardsList)
                     {
                         Data.Card card = CardManager.CardsByAssetID[deckCardData.Def.Asset];
-                        Data.AccountDeckCard accountDeckCard = new Data.AccountDeckCard()
+                        Data.AccountDeckCard accountDeckCard = accountDeck.Cards.Find(c => c.Handle == deckCardData.Handle);
+                        if (accountDeckCard == null)
                         {
-                            AccountID = pClient.Account.AccountID,
-                            AccountDeckID = accountDeck.AccountDeckID,
-                            CardID = card.CardID,
-                            Quantity = deckCardData.Qty,
-                            Handle = deckCardData.Handle,
-                            Previous = deckCardData.Prev,
-                        };
-                        accountDeck.Cards.Add(accountDeckCard);
-                        db.Execute(null, "INSERT INTO [AccountDeckCard]([AccountID],[AccountDeckID],[CardID],[Quantity],[Handle],[Previous]) VALUES(@0,@1,@2,@3,@4,@5)", accountDeckCard.AccountID, accountDeckCard.AccountDeckID, accountDeckCard.CardID, accountDeckCard.Quantity, accountDeckCard.Handle, accountDeckCard.Previous);
+                            if (deckCardData.Qty > 0)
+                            {
+                                accountDeckCard = new Data.AccountDeckCard()
+                                {
+                                    AccountDeckID = accountDeck.AccountDeckID,
+                                    AccountID = pClient.Account.AccountID,
+                                    CardID = card.CardID,
+                                    Quantity = deckCardData.Qty,
+                                    Handle = deckCardData.Handle,
+                                    Previous = deckCardData.Prev,
+                                };
+                                accountDeck.Cards.Add(accountDeckCard);
+                                db.Execute(null, "INSERT INTO [AccountDeckCard]([AccountID],[AccountDeckID],[CardID],[Quantity],[Handle],[Previous]) VALUES(@0,@1,@2,@3,@4,@5)", accountDeckCard.AccountID, accountDeckCard.AccountDeckID, accountDeckCard.CardID, accountDeckCard.Quantity, accountDeckCard.Handle, accountDeckCard.Previous);
+                            }
+                        }
+                        else if (deckCardData.Qty == 0)
+                        {
+                            db.Execute(null, "DELETE FROM [AccountDeckCard] WHERE [AccountDeckID]=@0 AND [Handle]=@1", accountDeckCard.AccountDeckID, accountDeckCard.Handle);
+                            accountDeck.Cards.Remove(accountDeckCard);
+                        }
+                        else
+                        {
+                            accountDeckCard.CardID = card.CardID;
+                            accountDeckCard.Quantity = deckCardData.Qty;
+                            accountDeckCard.Previous = deckCardData.Prev;
+                            db.Execute(null, "UPDATE [AccountDeckCard] SET [CardID]=@0,[Quantity]=@1,[Previous]=@2 WHERE [AccountDeckID]=@3 AND [Handle]=@4", accountDeckCard.CardID, accountDeckCard.Quantity, accountDeckCard.Previous, accountDeckCard.AccountDeckID, accountDeckCard.Handle);
+                        }
                     }
 
                     dbAction.SetResult(DBAction.Types.Result.E_SUCCESS);
