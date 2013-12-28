@@ -188,6 +188,12 @@ namespace Stonehearth
             {
                 // TODO: Check requirements
             }
+            List<MatchCard> allTargets = new List<MatchCard>();
+            foreach (MatchPlayer matchPlayer in Players)
+            {
+                matchPlayer.PlayCards.ForEach(c => allTargets.Add(c));
+                allTargets.Add(matchPlayer.HeroCard);
+            }
             foreach (MatchCard matchCard in CurrentPlayer.HandCards)
             {
                 if (!matchCard.Card.Cost.HasValue) continue;
@@ -197,7 +203,38 @@ namespace Stonehearth
                     allOptionsBuilder.AddOptions(PegasusGame.Option.CreateBuilder().SetType(PegasusGame.Option.Types.Type.POWER).SetMainOption(PegasusGame.SubOption.CreateBuilder().SetId(matchCard.EntityID)));
                     continue;
                 }
-                // TODO: Check requirements
+                if (matchCard.Card.Powers.TrueForAll(p => p.Requirements.Count == 0))
+                {
+                    allOptionsBuilder.AddOptions(PegasusGame.Option.CreateBuilder().SetType(PegasusGame.Option.Types.Type.POWER).SetMainOption(PegasusGame.SubOption.CreateBuilder().SetId(matchCard.EntityID)));
+                    continue;
+                }
+                bool allowed = true;
+                bool targetRequired = false;
+                bool targetIfAvailable = false;
+                List<MatchCard> targets = new List<MatchCard>(allTargets);
+                foreach (Data.CardPower cardPower in matchCard.Card.Powers)
+                {
+                    foreach (Data.CardPowerRequirement cardPowerRequirement in cardPower.Requirements)
+                    {
+                        switch (cardPowerRequirement.Type)
+                        {
+                            case PlayErrors.ErrorType.REQ_MINION_TARGET: targets.RemoveAll(e => e.CardType != TAG_CARDTYPE.MINION); break;
+                            case PlayErrors.ErrorType.REQ_FRIENDLY_TARGET: targets.RemoveAll(e => e.Owner != CurrentPlayer); break;
+                            case PlayErrors.ErrorType.REQ_ENEMY_TARGET: targets.RemoveAll(e => e.Owner == CurrentPlayer); break;
+                            case PlayErrors.ErrorType.REQ_TARGET_TO_PLAY: targetRequired = true; break;
+                            case PlayErrors.ErrorType.REQ_NUM_MINION_SLOTS: allowed = (CurrentPlayer.PlayCards.Count(c => c.CardType == TAG_CARDTYPE.MINION) + cardPowerRequirement.Parameter.Value) <= 7; break;
+                            case PlayErrors.ErrorType.REQ_TARGET_IF_AVAILABLE: targetIfAvailable = true; break;
+                            default: allowed = false; break;
+                        }
+                        if (!allowed) break;
+                    }
+                    if (!allowed) break;
+                }
+                if (allowed && targetRequired && targets.Count == 0) allowed = false;
+                if (!allowed) continue;
+                PegasusGame.SubOption.Builder option = PegasusGame.SubOption.CreateBuilder().SetId(matchCard.EntityID);
+                if (targetRequired || targetIfAvailable) targets.ForEach(c => option.AddTargets(c.EntityID));
+                allOptionsBuilder.AddOptions(PegasusGame.Option.CreateBuilder().SetType(PegasusGame.Option.Types.Type.POWER).SetMainOption(option));
             }
             return allOptionsBuilder.Build();
         }

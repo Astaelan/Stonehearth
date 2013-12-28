@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StonehearthCommon;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Stonehearth
         public Match Match = null;
         public int EntityID = 0;
         public string Name = string.Empty;
-        private Dictionary<GAME_TAG, int> mTags = new Dictionary<GAME_TAG, int>();
+        protected Dictionary<GAME_TAG, int> mTags = new Dictionary<GAME_TAG, int>();
 
         public MatchEntity(Match pMatch)
         {

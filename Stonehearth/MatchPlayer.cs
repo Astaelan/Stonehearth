@@ -23,6 +23,8 @@ namespace Stonehearth
         public MatchCard HeroPowerCard = null;
         public List<MatchCard> DeckCards = new List<MatchCard>();
         public List<MatchCard> HandCards = new List<MatchCard>();
+        public List<MatchCard> PlayCards = new List<MatchCard>();
+        public List<MatchCard> GraveCards = new List<MatchCard>();
 
         private PegasusGame.PowerHistory.Builder mPowerHistoryBuilder = PegasusGame.PowerHistory.CreateBuilder();
 
@@ -70,7 +72,7 @@ namespace Stonehearth
             while (unshuffled.Count > 0)
             {
                 int index = random.Next(0, unshuffled.Count - 1);
-                if (unshuffled[index].CardID == "CS2_168") shuffled.Insert(0, unshuffled[index]);
+                if (unshuffled[index].CardID == "CS2_168" || unshuffled[index].CardID == "EX1_277") shuffled.Insert(0, unshuffled[index]);
                 else shuffled.Add(unshuffled[index]);
                 unshuffled.RemoveAt(index);
             }

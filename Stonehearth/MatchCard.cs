@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StonehearthCommon;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -59,5 +60,8 @@ namespace Stonehearth
             if (Card.ImmuneToSpellpower.HasValue) SetTag((GAME_TAG)349, Convert.ToInt32(Card.ImmuneToSpellpower.Value));
             if (Card.Poisonous.HasValue) SetTag(GAME_TAG.POISONOUS, Convert.ToInt32(Card.Poisonous.Value));
         }
+
+        public TAG_CARDTYPE CardType { get { return (TAG_CARDTYPE)mTags.GetOrDefault(GAME_TAG.CARDTYPE); } }
+        public TAG_CARD_SET CardSet { get { return (TAG_CARD_SET)mTags.GetOrDefault(GAME_TAG.CARD_SET); } }
     }
 }

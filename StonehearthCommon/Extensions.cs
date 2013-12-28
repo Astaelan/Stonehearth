@@ -13,6 +13,13 @@ namespace StonehearthCommon
 
         public static void ForEach<T>(this IEnumerable<T> pThis, Action<T> pCallback) { foreach (T value in pThis) pCallback(value); }
 
+        public static TValue GetOrDefault<TKey, TValue>(this Dictionary<TKey, TValue> pThis, TKey pKey)
+        {
+            TValue value = default(TValue);
+            pThis.TryGetValue(pKey, out value);
+            return value;
+        }
+
         public static Date.Builder FromDateTime(this Date.Builder pThis, DateTime pValue)
         {
             pThis.SetYear(pValue.Year);
